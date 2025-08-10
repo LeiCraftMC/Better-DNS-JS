@@ -1,0 +1,16 @@
+.git
+.gitignore
+.github
+
+bun.lockb
+bun.toml
+node_modules
+
+tsconfig.json
+tsconfig.*.json
+
+CHANGELOG.md
+
+tests
+docs
+src
