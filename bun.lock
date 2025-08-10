@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "smart-dns",
+      "name": "better-dns",
       "devDependencies": {
         "@types/bun": "^1.2.5",
         "@types/node": "^22.7.3",

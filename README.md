@@ -1,1 +1,1 @@
-# Smart DNS
+# Better DNS

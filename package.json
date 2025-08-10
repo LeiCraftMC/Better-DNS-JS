@@ -1,5 +1,5 @@
 {
-    "name": "smart-dns",
+    "name": "better-dns",
 	"version": "0.1.0",
 	"module": "./dist/esm/index.js",
 	"main": "./dist/cjs/index.js",
@@ -14,20 +14,20 @@
 	},
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/LeiCraftMC/Smart-DNS-JS"
+        "url": "git+https://github.com/LeiCraftMC/Better-DNS-JS"
     },
     "author": "LeiCraft_",
     "publisher": "LeiCraft_MC",
     "license": "AGPL-3.0-only",
     "bugs": {
-        "url": "https://github.com/LeiCraftMC/Smart-DNS-JS/issues"
+        "url": "https://github.com/LeiCraftMC/Better-DNS-JS/issues"
     },
     "keywords": [
         "JavaScript",
         "TypeScript",
         "DNS"
     ],
-    "homepage": "https://github.com/LeiCraftMC/Smart-DNS-JS#readme",
+    "homepage": "https://github.com/LeiCraftMC/Better-DNS-JS#readme",
     "devDependencies": {
         "bun": "^1.2.5",
         "@types/bun": "^1.2.5",
