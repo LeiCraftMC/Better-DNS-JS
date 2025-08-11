@@ -1,9 +1,9 @@
-const http = require('http');
-const https = require('https');
-const { URL } = require('url');
-const Packet = require('../packet');
-const EventEmitter = require('events');
-const { debuglog } = require('util');
+import http from 'node:http';
+import https from 'node:https';
+import { URL } from 'node:url';
+import { Packet } from "../util/packet";
+import { EventEmitter } from 'node:events';
+import { debuglog } from 'node:util';
 
 const debug = debuglog('dns2-server');
 
@@ -27,7 +27,7 @@ const readStream = stream => new Promise((resolve, reject) => {
     .on('end', () => resolve(buffer));
 });
 
-class Server extends EventEmitter {
+export class DOHServer extends EventEmitter {
   constructor(options) {
     super();
     const { ssl } = Object.assign(this, { cors: true }, options);
@@ -143,4 +143,3 @@ class Server extends EventEmitter {
   }
 }
 
-module.exports = Server;

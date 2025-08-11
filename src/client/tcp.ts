@@ -1,6 +1,6 @@
-const tls = require('tls');
-const tcp = require('net');
-const Packet = require('../packet');
+import tls from 'tls';
+import tcp from 'net';
+import { Packet } from "../util/packet";
 
 const makeQuery = ({ name, type = 'A', cls = Packet.CLASS.IN, clientIp, recursive = true }) => {
   const packet = new Packet();
@@ -27,7 +27,7 @@ const protocols = {
   'tls:' : (host, port) => tls.connect({ host, port, servername: host }),
 };
 
-const TCPClient = ({ dns, protocol = 'tcp:', port = protocol === 'tls:' ? 853 : 53 } = {}) => {
+export const TCPClient = ({ dns, protocol = 'tcp:', port = protocol === 'tls:' ? 853 : 53 } = {}) => {
   if (!protocols[protocol]) {
     throw new Error('Protocol must be tcp: or tls:');
   }
@@ -45,5 +45,3 @@ const TCPClient = ({ dns, protocol = 'tcp:', port = protocol === 'tls:' ? 853 : 
     return Packet.parse(data);
   };
 };
-
-module.exports = TCPClient;

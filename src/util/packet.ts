@@ -3,40 +3,6 @@ import { BufferReader, BufferWriter } from './buffer-utils';
 
 const debug = debuglog('dns2');
 
-export const toIPv6 = (buffer: any) => buffer
-	.map((part: any) => (part > 0 ? part.toString(16) : '0'))
-	.join(':')
-	.replace(/\b(?:0+:){1,}/, ':');
-
-export const fromIPv6 = (address: string) => {
-	const digits = address.split(':');
-	// CAVEAT edge case for :: and IPs starting
-	// or ending by ::
-	if (digits[0] === '') {
-		digits.shift();
-	}
-	if (digits[digits.length - 1] === '') {
-		digits.pop();
-	}
-	// node js 10 does not support Array.prototype.flatMap
-	if (!Array.prototype.flatMap) {
-		// eslint-disable-next-line no-extend-native
-		Array.prototype.flatMap = function (f, ctx: any) {
-			return this.reduce((r, x, i, a) => r.concat(f.call(ctx, x, i, a)), []);
-		};
-	}
-
-	// CAVEAT we have to take into account
-	// the extra space used by the empty string
-	const missingFields = 8 - digits.length + 1;
-	return digits.flatMap((digit) => {
-		if (digit === '') {
-			return Array(missingFields).fill('0');
-		}
-		return digit.padStart(4, '0');
-	});
-};
-
 
 export class Packet {
 
@@ -82,7 +48,7 @@ export class Packet {
 
 	static parse(buffer: Buffer) {
 		const packet = new Packet();
-		const reader = new BufferReader(buffer);
+		const reader = new Packet.Reader(buffer);
 		packet.header = Packet.Header.parse(reader);
 		([ // props             parser              count
 			['questions', Packet.Question, packet.header.qdcount],
@@ -113,8 +79,8 @@ export class Packet {
 		this.header.rd = value ? 1 : 0;
 	}
 
-	public toBuffer(writer?: BufferWriter) {
-		writer = writer || new BufferWriter();
+	public toBuffer(writer?: Packet.Writer) {
+		writer = writer || new Packet.Writer();
 		this.header.qdcount = this.questions.length;
 		this.header.ancount = this.answers.length;
 		this.header.nscount = this.authorities.length;
@@ -194,6 +160,43 @@ export class Packet {
 			.replace(/\//g, '_');
 	};
 
+
+	static toIPv6(buffer: any) {
+		return buffer
+		.map((part: any) => (part > 0 ? part.toString(16) : '0'))
+		.join(':')
+		.replace(/\b(?:0+:){1,}/, ':');
+	}
+
+	static fromIPv6(address: string) {
+		const digits = address.split(':');
+		// CAVEAT edge case for :: and IPs starting
+		// or ending by ::
+		if (digits[0] === '') {
+			digits.shift();
+		}
+		if (digits[digits.length - 1] === '') {
+			digits.pop();
+		}
+		// node js 10 does not support Array.prototype.flatMap
+		if (!Array.prototype.flatMap) {
+			// eslint-disable-next-line no-extend-native
+			Array.prototype.flatMap = function (f, ctx: any) {
+				return this.reduce((r, x, i, a) => r.concat(f.call(ctx, x, i, a)), []);
+			};
+		}
+
+		// CAVEAT we have to take into account
+		// the extra space used by the empty string
+		const missingFields = 8 - digits.length + 1;
+		return digits.flatMap((digit) => {
+			if (digit === '') {
+				return Array(missingFields).fill('0');
+			}
+			return digit.padStart(4, '0');
+		});
+	};
+
 }
 
 // /**
@@ -213,6 +216,9 @@ export class Packet {
 
 
 export namespace Packet {
+
+	export class Reader extends BufferReader {};
+	export class Writer extends BufferWriter {};
 
 	export const TYPE = {
 		A      : 0x01,
@@ -292,29 +298,29 @@ export namespace Packet {
 			}
 		}
 
-		static parse(reader: BufferReader | Buffer) {
+		static parse(reader: Packet.Reader | Buffer) {
 			const header = new Packet.Header();
 			if (reader instanceof Buffer) {
-				reader = new BufferReader(reader);
+				reader = new Packet.Reader(reader);
 			}
-			header.id = (reader as BufferReader).read(16);
-			header.qr = (reader as BufferReader).read(1);
-			header.opcode = (reader as BufferReader).read(4);
-			header.aa = (reader as BufferReader).read(1);
-			header.tc = (reader as BufferReader).read(1);
-			header.rd = (reader as BufferReader).read(1);
-			header.ra = (reader as BufferReader).read(1);
-			header.z = (reader as BufferReader).read(3);
-			header.rcode = (reader as BufferReader).read(4);
-			header.qdcount = (reader as BufferReader).read(16);
-			header.ancount = (reader as BufferReader).read(16);
-			header.nscount = (reader as BufferReader).read(16);
-			header.arcount = (reader as BufferReader).read(16);
+			header.id = (reader as Packet.Reader).read(16);
+			header.qr = (reader as Packet.Reader).read(1);
+			header.opcode = (reader as Packet.Reader).read(4);
+			header.aa = (reader as Packet.Reader).read(1);
+			header.tc = (reader as Packet.Reader).read(1);
+			header.rd = (reader as Packet.Reader).read(1);
+			header.ra = (reader as Packet.Reader).read(1);
+			header.z = (reader as Packet.Reader).read(3);
+			header.rcode = (reader as Packet.Reader).read(4);
+			header.qdcount = (reader as Packet.Reader).read(16);
+			header.ancount = (reader as Packet.Reader).read(16);
+			header.nscount = (reader as Packet.Reader).read(16);
+			header.arcount = (reader as Packet.Reader).read(16);
 			return header;
 		};
 
-		public toBuffer(writer?: BufferWriter) {
-			writer = writer || new BufferWriter();
+		public toBuffer(writer?: Packet.Writer) {
+			writer = writer || new Packet.Writer();
 			writer.write(this.id, 16);
 			writer.write(this.qr, 1);
 			writer.write(this.opcode, 4);
@@ -359,27 +365,27 @@ export namespace Packet {
 			}
 		}
 
-		public toBuffer(writer?: BufferWriter) {
+		public toBuffer(writer?: Packet.Writer) {
 			return Packet.Question.encode(this, writer);
 		}
 
-		static parse(reader: BufferReader | Buffer) {
+		static parse(reader: Packet.Reader | Buffer) {
 			const question = new Packet.Question();
 			if (reader instanceof Buffer) {
-				reader = new BufferReader(reader);
+				reader = new Packet.Reader(reader);
 			}
 			question.name = Packet.Name.decode(reader);
-			question.type = (reader as BufferReader).read(16);
-			question.class = (reader as BufferReader).read(16);
+			question.type = (reader as Packet.Reader).read(16);
+			question.class = (reader as Packet.Reader).read(16);
 			return question;
 		};
 
-		static decode(reader: BufferReader | Buffer) {
+		static decode(reader: Packet.Reader | Buffer) {
 			return Packet.Question.parse(reader);
 		}
 
-		static encode(question: Packet.Question, writer?: BufferWriter) {
-			writer = writer || new BufferWriter();
+		static encode(question: Packet.Question, writer?: Packet.Writer) {
+			writer = writer || new Packet.Writer();
 			Packet.Name.encode(question.name, writer);
 			writer.write(question.type, 16);
 			writer.write(question.class, 16);
@@ -419,12 +425,12 @@ export namespace Packet {
 			Object.assign(this, defaults, input);
 		}
 
-		public toBuffer(writer?: BufferWriter) {
+		public toBuffer(writer?: Packet.Writer) {
 			return Packet.Resource.encode(this, writer);
 		}
 
-		static encode(resource: Packet.Resource, writer?: BufferWriter) {
-			writer = writer || new BufferWriter();
+		static encode(resource: Packet.Resource, writer?: Packet.Writer) {
+			writer = writer || new Packet.Writer();
 			Packet.Name.encode(resource.name, writer);
 			writer.write(resource.type, 16);
 			writer.write(resource.class, 16);
@@ -439,16 +445,16 @@ export namespace Packet {
 			}
 		}
 
-		static parse(reader: BufferReader | Buffer) {
+		static parse(reader: Packet.Reader | Buffer) {
 			if (reader instanceof Buffer) {
-				reader = new BufferReader(reader);
+				reader = new Packet.Reader(reader);
 			}
 			let resource = new Packet.Resource();
 			resource.name = Packet.Name.decode(reader);
-			resource.type = (reader as BufferReader).read(16);
-			resource.class = (reader as BufferReader).read(16);
-			resource.ttl = (reader as BufferReader).read(32);
-			let length = (reader as BufferReader).read(16);
+			resource.type = (reader as Packet.Reader).read(16);
+			resource.class = (reader as Packet.Reader).read(16);
+			resource.ttl = (reader as Packet.Reader).read(32);
+			let length = (reader as Packet.Reader).read(16);
 			const parser = Object.keys(Packet.TYPE).filter(function (type) {
 				return resource.type === (Packet.TYPE as any)[type] as number;
 			})[0];
@@ -457,13 +463,13 @@ export namespace Packet {
 			} else {
 				debug('node-dns > unknown parser type: %s(%j)', parser, resource.type);
 				const arr = [];
-				while (length--) arr.push((reader as BufferReader).read(8));
+				while (length--) arr.push((reader as Packet.Reader).read(8));
 				resource.data = Buffer.from(arr);
 			}
 			return resource;
 		}
 
-		static decode(reader: BufferReader | Buffer) {
+		static decode(reader: Packet.Reader | Buffer) {
 			return Packet.Resource.parse(reader);
 		}
 
@@ -473,33 +479,33 @@ export namespace Packet {
 
 		static readonly COPY = 0xc0;
 
-		static decode(reader: BufferReader | Buffer) {
+		static decode(reader: Packet.Reader | Buffer) {
 			if (reader instanceof Buffer) {
-				reader = new BufferReader(reader);
+				reader = new Packet.Reader(reader);
 			}
-			const name = []; let o; let len = (reader as BufferReader).read(8);
+			const name = []; let o; let len = reader.read(8);
 			while (len) {
-				if ((len & Packet.Name.COPY) === Packet.Name.COPY) {
-					len -= Packet.Name.COPY;
-					len = len << 8;
-					const pos = len + (reader as BufferReader).read(8);
-					if (!o) o = (reader as BufferReader).offset;
-					(reader as BufferReader).offset = pos * 8;
-					len = (reader as BufferReader).read(8);
-					continue;
-				} else {
-					let part = '';
-					while (len--) part += String.fromCharCode((reader as BufferReader).read(8));
-					name.push(part);
-					len = (reader as BufferReader).read(8);
-				}
+			if ((len & Packet.Name.COPY) === Packet.Name.COPY) {
+				len -= Packet.Name.COPY;
+				len = len << 8;
+				const pos = len + reader.read(8);
+				if (!o) o = reader.offset;
+				reader.offset = pos * 8;
+				len = reader.read(8);
+				continue;
+			} else {
+				let part = '';
+				while (len--) part += String.fromCharCode(reader.read(8));
+				name.push(part);
+				len = reader.read(8);
 			}
-			if (o) (reader as BufferReader).offset = o;
+			}
+			if (o) reader.offset = o;
 			return name.join('.');
 		}
 
-		static encode(domain: string, writer?: BufferWriter) {
-			writer = writer || new BufferWriter();
+		static encode(domain: string, writer?: Packet.Writer) {
+			writer = writer || new Packet.Writer();
 			// TODO: domain name compress
 			(domain || '').split('.').filter(function (part) {
 				return !!part;
@@ -532,8 +538,8 @@ export namespace Packet.Resource {
 			this.address = address;
 		}
 
-		static encode(record: Packet.Resource.A, writer?: BufferWriter) {
-			writer = writer || new BufferWriter();
+		static encode(record: Packet.Resource.A, writer?: Packet.Writer) {
+			writer = writer || new Packet.Writer();
 			const parts = record.address.split('.');
 			writer.write(parts.length, 16);
 			parts.forEach(function (part) {
@@ -542,7 +548,7 @@ export namespace Packet.Resource {
 			return writer.toBuffer();
 		};
 
-		static decode(reader: BufferReader, length: number) {
+		static decode(reader: Packet.Reader, length: number) {
 			const parts = [];
 			while (length--) parts.push(reader.read(8));
 			const address = parts.join('.')
@@ -565,8 +571,8 @@ export namespace Packet.Resource {
 			this.priority = priority;
 		}
 
-		static encode(record: Packet.Resource.MX, writer?: BufferWriter) {
-			writer = writer || new BufferWriter();
+		static encode(record: Packet.Resource.MX, writer?: Packet.Writer) {
+			writer = writer || new Packet.Writer();
 			const len = Packet.Name.encode(record.exchange).length;
 			writer.write(len + 2, 16);
 			writer.write(record.priority, 16);
@@ -574,7 +580,7 @@ export namespace Packet.Resource {
 			return writer.toBuffer();
 		};
 
-		static decode(reader: BufferReader, length: number) {
+		static decode(reader: Packet.Reader, length: number) {
 			const priority = reader.read(16);
 			const exchange = Packet.Name.decode(reader);
 			return new Packet.Resource.MX(exchange, priority);
@@ -594,9 +600,9 @@ export namespace Packet.Resource {
 			this.address = address;
 		}
 
-		static encode(record: Packet.Resource.AAAA, writer?: BufferWriter) {
-			writer = writer || new BufferWriter();
-			const parts = fromIPv6(record.address);
+		static encode(record: Packet.Resource.AAAA, writer?: Packet.Writer) {
+			writer = writer || new Packet.Writer();
+			const parts = Packet.fromIPv6(record.address);
 			writer.write(parts.length * 2, 16);
 			parts.forEach(function (part) {
 				writer.write(parseInt(part, 16), 16);
@@ -604,13 +610,13 @@ export namespace Packet.Resource {
 			return writer.toBuffer();
 		}
 
-		static decode(reader: BufferReader, length: number) {
+		static decode(reader: Packet.Reader, length: number) {
 			const parts = [];
 			while (length) {
 				length -= 2;
 				parts.push(reader.read(16));
 			}
-			const address = toIPv6(parts);
+			const address = Packet.toIPv6(parts);
 			return new Packet.Resource.AAAA(address);
 		}
 
@@ -627,14 +633,14 @@ export namespace Packet.Resource {
 			this.ns = ns;
 		}
 
-		static decode(reader: BufferReader, length: number) {
+		static decode(reader: Packet.Reader, length: number) {
 			const resource = new NS('');
 			resource.ns = Packet.Name.decode(reader);
 			return resource;
 		}
 
-		static encode(record: Packet.Resource.NS, writer?: BufferWriter) {
-			writer = writer || new BufferWriter();
+		static encode(record: Packet.Resource.NS, writer?: Packet.Writer) {
+			writer = writer || new Packet.Writer();
 			writer.write(Packet.Name.encode(record.ns).length, 16);
 			Packet.Name.encode(record.ns, writer);
 			return writer.toBuffer();
@@ -652,14 +658,14 @@ export namespace Packet.Resource {
 			this.domain = domain;
 		}
 
-		static decode(reader: BufferReader, length: number) {
+		static decode(reader: Packet.Reader, length: number) {
 			const resource = new CNAME('');
 			resource.domain = Packet.Name.decode(reader);
 			return resource;
 		}
 
-		static encode(record: Packet.Resource.CNAME, writer?: BufferWriter) {
-			writer = writer || new BufferWriter();
+		static encode(record: Packet.Resource.CNAME, writer?: Packet.Writer) {
+			writer = writer || new Packet.Writer();
 			writer.write(Packet.Name.encode(record.domain).length, 16);
 			Packet.Name.encode(record.domain, writer);
 			return writer.toBuffer();
@@ -687,7 +693,7 @@ export namespace Packet.Resource {
 			this.data = data;
 		}
 
-		static decode(reader: BufferReader, length: number) {
+		static decode(reader: Packet.Reader, length: number) {
 			const resource = new TXT('');
 			const parts = [];
 			let bytesRead = 0, chunkLength = 0;
@@ -706,8 +712,8 @@ export namespace Packet.Resource {
 			return resource;
 		}
 
-		static encode(record: Packet.Resource.TXT, writer?: BufferWriter) {
-			writer = writer || new BufferWriter();
+		static encode(record: Packet.Resource.TXT, writer?: Packet.Writer) {
+			writer = writer || new Packet.Writer();
 
 			const characterStrings = Array.isArray(record.data) ? record.data : [record.data];
 			const characterStringBuffers = characterStrings.map(function(characterString) {
@@ -770,7 +776,7 @@ export namespace Packet.Resource {
 			this.minimum = minimum;
 		}
 
-		static decode(reader: BufferReader, length: number) {
+		static decode(reader: Packet.Reader, length: number) {
 			const primary = Packet.Name.decode(reader);
 			const admin = Packet.Name.decode(reader);
 			const serial = reader.read(32);
@@ -782,8 +788,8 @@ export namespace Packet.Resource {
 			return new SOA(primary, admin, serial, refresh, retry, expiration, minimum);
 		}
 
-		static encode(record: Packet.Resource.SOA, writer?: BufferWriter) {
-			writer = writer || new BufferWriter();
+		static encode(record: Packet.Resource.SOA, writer?: Packet.Writer) {
+			writer = writer || new Packet.Writer();
 			let len = 0;
 			len += Packet.Name.encode(record.primary).length;
 			len += Packet.Name.encode(record.admin).length;
@@ -819,7 +825,7 @@ export namespace Packet.Resource {
 			this.port = port;
 		}
 
-		static decode(reader: BufferReader, length: number) {
+		static decode(reader: Packet.Reader, length: number) {
 			const priority = reader.read(16);
 			const weight = reader.read(16);
 			const port = reader.read(16);
@@ -828,8 +834,8 @@ export namespace Packet.Resource {
 			return new SRV(target, priority, weight, port);
 		}
 
-		static encode(record: Packet.Resource.SRV, writer?: BufferWriter) {
-			writer = writer || new BufferWriter();
+		static encode(record: Packet.Resource.SRV, writer?: Packet.Writer) {
+			writer = writer || new Packet.Writer();
 			const { length } = Packet.Name.encode(record.target);
 			
 			writer.write(length + 6, 16);
@@ -855,7 +861,7 @@ export namespace Packet.Resource {
 			this.rdata = rdata;
 		}
 
-		static decode(reader: BufferReader, length: number) {
+		static decode(reader: Packet.Reader, length: number) {
 			const resource = new EDNS();
 			
 			while (length) {
@@ -880,8 +886,8 @@ export namespace Packet.Resource {
 			return resource;
 		}
 
-		static encode(record: Packet.Resource.EDNS, writer?: BufferWriter) {
-			const rdataWriter = new BufferWriter();
+		static encode(record: Packet.Resource.EDNS, writer?: Packet.Writer) {
+			const rdataWriter = new Packet.Writer();
 			
 			for (const rdata of record.rdata) {
 				const encoder = Object.keys(Packet.EDNS_OPTION_CODE).filter(function(type) {
@@ -889,7 +895,7 @@ export namespace Packet.Resource {
 				})[0];
 				
 				if (encoder in Packet.Resource.EDNS && Packet.Resource.EDNS[encoder].encode) {
-					const w = new BufferWriter();
+					const w = new Packet.Writer();
 					Packet.Resource.EDNS[encoder].encode(rdata, w);
 					rdataWriter.write(rdata.ednsCode, 16);
 					rdataWriter.write(w.buffer.length / 8, 16);
@@ -899,7 +905,7 @@ export namespace Packet.Resource {
 				}
 			}
 			
-			writer = writer || new BufferWriter();
+			writer = writer || new Packet.Writer();
 			writer.write(rdataWriter.buffer.length / 8, 16);
 			writer.writeBuffer(rdataWriter);
 			
@@ -924,7 +930,7 @@ export namespace Packet.Resource {
 				this.ip = ip;
 			}
 
-			static decode(reader: BufferReader, length: number) {
+			static decode(reader: Packet.Reader, length: number) {
 				const rdata = new EDNS.ECS('0.0.0.0');
 				
 				rdata.family = reader.read(16);
@@ -959,8 +965,8 @@ export namespace Packet.Resource {
 				return rdata;
 			}
 
-			static encode(record: EDNS.ECS, writer?: BufferWriter) {
-				writer = writer || new BufferWriter();
+			static encode(record: EDNS.ECS, writer?: Packet.Writer) {
+				writer = writer || new Packet.Writer();
 				const ip = record.ip.split('.').map(s => parseInt(s));
 				
 				writer.write(record.family, 16);
@@ -991,8 +997,8 @@ export namespace Packet.Resource {
 			this.value = value;
 		}
 
-		static encode(record: Packet.Resource.CAA, writer?: BufferWriter) {
-			writer = writer || new BufferWriter();
+		static encode(record: Packet.Resource.CAA, writer?: Packet.Writer) {
+			writer = writer || new Packet.Writer();
 
 			const buffer = Buffer.from(record.tag + record.value, 'utf8');
 			writer.write(2 + buffer.length, 16);
@@ -1044,7 +1050,7 @@ export namespace Packet.Resource {
 			this.keyTag = ac & 0XFFFF;
 		}
 
-		static decode(reader: BufferReader, length: number) {
+		static decode(reader: Packet.Reader, length: number) {
 			const RData = [];
 			while (RData.length < length) {
 				RData.push(reader.read(8));
@@ -1068,8 +1074,8 @@ export namespace Packet.Resource {
 			return resource;
 		}
 
-		static encode(record: Packet.Resource.DNSKEY, writer?: BufferWriter) {
-			writer = writer || new BufferWriter();
+		static encode(record: Packet.Resource.DNSKEY, writer?: Packet.Writer) {
+			writer = writer || new Packet.Writer();
 			const buffer = Buffer.from(record.key, 'base64');
 			
 			writer.write(4 + buffer.length, 16);
@@ -1086,8 +1092,8 @@ export namespace Packet.Resource {
 	}
 
 	export class RRSIG {
-		public type: number;
-		public class: number;
+		// public type: number;
+		// public class: number;
 		public sigType: number;
 		public algorithm: number;
 		public labels: number;
@@ -1100,8 +1106,8 @@ export namespace Packet.Resource {
 
 		constructor(sigType: number, algorithm: number, labels: number, originalTtl: number, 
 					expiration: string, inception: string, keyTag: number, signer: string, signature: string) {
-			this.type = Packet.TYPE.RRSIG;
-			this.class = Packet.CLASS.IN;
+			// this.type = Packet.TYPE.RRSIG;
+			// this.class = Packet.CLASS.IN;
 			this.sigType = sigType;
 			this.algorithm = algorithm;
 			this.labels = labels;
@@ -1113,15 +1119,15 @@ export namespace Packet.Resource {
 			this.signature = signature;
 		}
 
-		static decode(reader: BufferReader, length: number) {
+		static decode(reader: Packet.Reader, length: number) {
 			function dateForSig(date: number) {
-				date = new Date(date * 1000);
+				const dateObj = new Date(date * 1000);
 				const definitions = {
-					month: (date.getUTCMonth() + 1),
-					date: date.getUTCDate(),
-					hour: date.getUTCHours(),
-					minutes: date.getUTCMinutes(),
-					seconds: date.getUTCSeconds(),
+					month: (dateObj.getUTCMonth() + 1),
+					date: dateObj.getUTCDate(),
+					hour: dateObj.getUTCHours(),
+					minutes: dateObj.getUTCMinutes(),
+					seconds: dateObj.getUTCSeconds(),
 				};
 				
 				for (const key in definitions) {
@@ -1130,7 +1136,7 @@ export namespace Packet.Resource {
 					}
 				}
 				
-				return date.getFullYear() + '' +
+				return dateObj.getFullYear() + '' +
 					definitions.month + '' +
 					definitions.date + '' +
 					definitions.hour + '' +

@@ -1,7 +1,7 @@
-const http = require('http');
-const https = require('https');
-const http2 = require('http2');
-const Packet = require('../packet');
+import http from 'http';
+import https from 'https';
+import http2 from 'http2';
+import { Packet } from "../util/packet";
 
 const protocols = {
   'http:'  : http.get,
@@ -73,7 +73,7 @@ const buildQuery = ({ name, type = 'A', cls = Packet.CLASS.IN, clientIp, recursi
   return packet.toBase64URL();
 };
 
-const DOHClient = ({ dns }) => {
+export const DOHClient = ({ dns }) => {
   return async(name, type, cls, options = {}) => {
     const query = buildQuery({ name, type, cls, ...options });
     const response = await makeRequest(dns, query);
@@ -82,4 +82,3 @@ const DOHClient = ({ dns }) => {
   };
 };
 
-module.exports = DOHClient;

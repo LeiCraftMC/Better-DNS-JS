@@ -1,12 +1,12 @@
-const udp = require('dgram');
-const Packet = require('../packet');
+import udp from "dgram";
+import { Packet } from "../util/packet";
 
 /**
  * [Server description]
  * @docs https://tools.ietf.org/html/rfc1034
  * @docs https://tools.ietf.org/html/rfc1035
  */
-class Server extends udp.Socket {
+export class UDPServer extends udp.Socket {
   constructor(options) {
     let type = 'udp4';
     if (typeof options === 'object') {
@@ -44,4 +44,3 @@ class Server extends udp.Socket {
   }
 }
 
-module.exports = Server;

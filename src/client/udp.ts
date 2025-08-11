@@ -1,11 +1,11 @@
-const udp = require('dgram');
-const Packet = require('../packet');
-const { equal } = require('assert');
-const { debuglog } = require('util');
+import udp from "dgram";
+import { Packet } from "../util/packet";
+import { equal } from "assert";
+import { debuglog } from "util";
 
 const debug = debuglog('dns2');
 
-module.exports = ({ dns = '8.8.8.8', port = 53, socketType = 'udp4' } = {}) => {
+export const UDPClient = ({ dns = '8.8.8.8', port = 53, socketType = 'udp4' } = {}) => {
   return (name, type = 'A', cls = Packet.CLASS.IN, options = {}) => {
     const { clientIp, recursive = true } = options;
     const query = new Packet();

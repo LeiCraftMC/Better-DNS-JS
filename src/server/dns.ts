@@ -3,7 +3,7 @@ const DOHServer = require('./doh');
 const TCPServer = require('./tcp');
 const UDPServer = require('./udp');
 
-class DNSServer extends EventEmitter {
+export class DNSServer extends EventEmitter {
   constructor(options = {}) {
     super();
     this.servers = {};
@@ -91,4 +91,3 @@ class DNSServer extends EventEmitter {
   }
 }
 
-module.exports = DNSServer;

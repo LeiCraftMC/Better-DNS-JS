@@ -1,7 +1,7 @@
-const tcp = require('net');
-const Packet = require('../packet');
+import tcp from "net";
+import { Packet } from "../util/packet";
 
-class Server extends tcp.Server {
+export class TCPServer extends tcp.Server {
   constructor(options) {
     super();
     if (typeof options === 'function') {
@@ -31,4 +31,4 @@ class Server extends tcp.Server {
   }
 }
 
-module.exports = Server;
+

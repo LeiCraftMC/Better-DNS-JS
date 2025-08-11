@@ -1,31 +1,26 @@
-const UDPServer = require('./udp');
-const TCPServer = require('./tcp');
-const DOHServer = require('./doh');
-const DNSServer = require('./dns');
+import { DNSServer } from './dns';
+import { DOHServer } from './doh';
+import { TCPServer } from './tcp';
+import { UDPServer } from './udp';
 
-const createUDPServer = options => {
+export const createUDPServer = options => {
   return new UDPServer(options);
 };
 
-const createTCPServer = options => {
+export const createTCPServer = options => {
   return new TCPServer(options);
 };
 
-const createDOHServer = options => {
+export const createDOHServer = options => {
   return new DOHServer(options);
 };
 
-const createServer = options => {
+export const createServer = options => {
   return new DNSServer(options);
 };
 
-module.exports = {
-  UDPServer,
-  TCPServer,
-  DOHServer,
-  DNSServer,
-  createTCPServer,
-  createUDPServer,
-  createDOHServer,
-  createServer,
-};
+
+export * from './udp';
+export * from './tcp';
+export * from './doh';
+export * from './dns';

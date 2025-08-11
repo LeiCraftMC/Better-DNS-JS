@@ -1,4 +1,4 @@
-const {
+import {
     TCPServer,
     UDPServer,
     DOHServer,
@@ -6,7 +6,7 @@ const {
     createUDPServer,
     createDOHServer,
     createServer,
-} = require('./server');
+} from "./server/index"
 const EventEmitter = require('events');
 
 /**
@@ -14,7 +14,7 @@ const EventEmitter = require('events');
  * @docs https://tools.ietf.org/html/rfc1034
  * @docs https://tools.ietf.org/html/rfc1035
  */
-class DNS extends EventEmitter {
+export class DNS extends EventEmitter {
     constructor(options) {
         super();
         Object.assign(this, {
@@ -78,20 +78,13 @@ class DNS extends EventEmitter {
     }
 }
 
-DNS.TCPServer = TCPServer;
-DNS.UDPServer = UDPServer;
-DNS.DOHServer = DOHServer;
+export * from "./server/index"
 
-DNS.createUDPServer = createUDPServer;
-DNS.createTCPServer = createTCPServer;
-DNS.createDOHServer = createDOHServer;
-DNS.createServer = createServer;
+export * from "./client/tcp";
+export * from "./client/doh";
+export * from "./client/udp";
+export * from "./client/google";
 
-DNS.TCPClient = require('./client/tcp');
-DNS.DOHClient = require('./client/doh');
-DNS.UDPClient = require('./client/udp');
-DNS.GoogleClient = require('./client/google');
+export { Packet } from "./util/packet";
 
-DNS.Packet = require('./packet');
-
-module.exports = DNS;
+export default DNS;
