@@ -98,36 +98,40 @@ export namespace DNSRecords {
     }
 }
 
-export function nextSoaSerial(currentSerial: number) {
-    const now = new Date();
+export namespace DNSRecords.Util {
 
-    // Create today's base serial: YYYYMMDD
-    const todayBase = now.getFullYear().toString() +
-        String(now.getMonth() + 1).padStart(2, '0') +
-        String(now.getDate()).padStart(2, '0');
+    export function nextSoaSerial(currentSerial: number) {
+        const now = new Date();
 
-    const todayBaseNum = parseInt(todayBase, 10);
+        // Create today's base serial: YYYYMMDD
+        const todayBase = now.getFullYear().toString() +
+            String(now.getMonth() + 1).padStart(2, '0') +
+            String(now.getDate()).padStart(2, '0');
 
-    if (!currentSerial) {
-        // If no serial exists yet, start with today's date + 00
-        return parseInt(todayBase + '00', 10);
-    }
+        const todayBaseNum = parseInt(todayBase, 10);
 
-    const currentDatePart = Math.floor(currentSerial / 100); // first 8 digits
-    let counter = currentSerial % 100; // last 2 digits
-
-    if (currentDatePart === todayBaseNum) {
-        // Same date → increment counter
-        counter++;
-        if (counter > 99) {
-            throw new Error('SOA serial overflow for today — max 99 edits per day.');
+        if (!currentSerial) {
+            // If no serial exists yet, start with today's date + 00
+            return parseInt(todayBase + '00', 10);
         }
-    } else if (currentDatePart < todayBaseNum) {
-        // New day → reset counter
-        counter = 0;
-    } else {
-        throw new Error('Current serial is from the future — check your clock.');
+
+        const currentDatePart = Math.floor(currentSerial / 100); // first 8 digits
+        let counter = currentSerial % 100; // last 2 digits
+
+        if (currentDatePart === todayBaseNum) {
+            // Same date → increment counter
+            counter++;
+            if (counter > 99) {
+                throw new Error('SOA serial overflow for today — max 99 edits per day.');
+            }
+        } else if (currentDatePart < todayBaseNum) {
+            // New day → reset counter
+            counter = 0;
+        } else {
+            throw new Error('Current serial is from the future — check your clock.');
+        }
+
+        return parseInt(todayBase + String(counter).padStart(2, '0'), 10);
     }
 
-    return parseInt(todayBase + String(counter).padStart(2, '0'), 10);
 }

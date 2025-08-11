@@ -1,4 +1,4 @@
-import { DNSRecords, nextSoaSerial } from "../../utils/records";
+import { DNSRecords } from "../../utils/records";
 import { AbstractDNSRecordStore } from "./abstractRecordStore";
 
 export type DNSZoneRecords = Map<string, Map<DNSRecords.TYPES, DNSRecords.Record[]>>;
@@ -37,7 +37,7 @@ export abstract class AbstractDNSZoneStore extends AbstractDNSRecordStore {
         if (!soaRecord) {
             return null;
         }
-        soaRecord.serial = nextSoaSerial(soaRecord.serial);
+        soaRecord.serial = DNSRecords.Util.nextSoaSerial(soaRecord.serial);
 
 
         zoneData.records.push(soaRecord);
