@@ -1,17 +1,17 @@
 {
     "name": "better-dns",
-	"version": "0.1.1",
-	"module": "./dist/esm/index.js",
-	"main": "./dist/cjs/index.js",
-	"types": "./dist/types/index.d.ts",
-	"scripts": {
-		"test": "bun test",
-		"build": "bun run build:esm && bun run build:cjs && bun run build:types",
-		"build:esm": "rm -rf dist/esm && tsc -p tsconfig.esm.json",
-		"build:cjs": "rm -rf dist/cjs && tsc -p tsconfig.cjs.json",
-		"build:types": "rm -rf dist/types && tsc -p tsconfig.types.json",
-		"release": "bun run build && bun run test && bun publish"
-	},
+    "version": "0.1.1",
+    "module": "./dist/esm/index.js",
+    "main": "./dist/cjs/index.js",
+    "types": "./dist/types/index.d.ts",
+    "scripts": {
+        "test": "bun test",
+        "build": "bun run build:esm && bun run build:cjs && bun run build:types",
+        "build:esm": "rm -rf dist/esm && tsc -p tsconfig.esm.json",
+        "build:cjs": "rm -rf dist/cjs && tsc -p tsconfig.cjs.json",
+        "build:types": "rm -rf dist/types && tsc -p tsconfig.types.json",
+        "release": "bun run build && bun run test && bun publish"
+    },
     "repository": {
         "type": "git",
         "url": "git+https://github.com/LeiCraftMC/Better-DNS-JS"
@@ -33,5 +33,8 @@
         "@types/bun": "^1.2.5",
         "typescript": "^5.6.3",
         "@types/node": "^22.7.3"
+    },
+    "dependencies": {
+        "dns2": "^2.1.0"
     }
 }
