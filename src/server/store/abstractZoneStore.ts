@@ -1,10 +1,13 @@
 import { DNSRecords } from "../../utils/records";
 
+export type DNSZoneRecords = Map<string, Map<number, DNSRecords.Record[]>>
+
+
 export class DNSZone {
 
     constructor(
         public name: string,
-        public records: DNSRecords.Record[]
+        public records: DNSZoneRecords
     ) {}
 
 }
@@ -13,7 +16,7 @@ export abstract class AbstractDNSZoneStore {
 
     protected abstract _createZone(name: string): Promise<void>;
     protected abstract _getZone(name: string): Promise<DNSZone | null>;
-    protected abstract _setZone(zoneData: DNSZone): Promise<void>;
+    protected abstract _setZone(zone: DNSZone): Promise<void>;
     protected abstract _deleteZone(name: string): Promise<void>;
     protected abstract _existsZone(name: string): Promise<boolean>;
 
@@ -27,7 +30,11 @@ export abstract class AbstractDNSZoneStore {
         return this._getZone(name);
     }
 
-    async setZone(zoneData: DNSZone) {
+    async setZone(zone: DNSZone) {
+
+        const soaRecord = zone.records.find(record => record.type === DNSRecords.TYPES.SOA);
+        zoneData.records.push(soaRecord);
+
         await this._setZone(zoneData);
     }
 
