@@ -1,6 +1,6 @@
 import { DNSRecords } from "../../utils/records";
 
-export type DNSZoneRecords = Map<string, Map<number, DNSRecords.Record[]>>
+export type DNSZoneRecords = Map<string, Map<DNSRecords.VALID_TYPE, Map<DNSRecords.VALID_CLASS, DNSRecords.Record[]>>>
 
 
 export class DNSZone {
@@ -32,7 +32,8 @@ export abstract class AbstractDNSZoneStore {
 
     async setZone(zone: DNSZone) {
 
-        const soaRecord = zone.records.find(record => record.type === DNSRecords.TYPES.SOA);
+        const soaRecord = zone.records.get(DNSRecords.TYPES.SOA)?.get(DNSRecords.VALID_CLASS.IN)?.[0];
+        
         zoneData.records.push(soaRecord);
 
         await this._setZone(zoneData);
