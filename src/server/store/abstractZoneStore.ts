@@ -1,6 +1,7 @@
-import { DNSRecords } from "../../utils/records";
+import { DNSRecords, nextSoaSerial } from "../../utils/records";
+import { AbstractDNSRecordStore } from "./abstractRecordStore";
 
-export type DNSZoneRecords = Map<string, Map<DNSRecords.VALID_TYPE, Map<DNSRecords.VALID_CLASS, DNSRecords.Record[]>>>
+export type DNSZoneRecords = Map<string, Map<DNSRecords.TYPES, DNSRecords.Record[]>>;
 
 
 export class DNSZone {
@@ -12,7 +13,7 @@ export class DNSZone {
 
 }
 
-export abstract class AbstractDNSZoneStore {
+export abstract class AbstractDNSZoneStore extends AbstractDNSRecordStore {
 
     protected abstract _createZone(name: string): Promise<void>;
     protected abstract _getZone(name: string): Promise<DNSZone | null>;
@@ -32,8 +33,13 @@ export abstract class AbstractDNSZoneStore {
 
     async setZone(zone: DNSZone) {
 
-        const soaRecord = zone.records.get(DNSRecords.TYPES.SOA)?.get(DNSRecords.VALID_CLASS.IN)?.[0];
-        
+        const soaRecord = zone.records.get(zone.name.toLowerCase())?.get(DNSRecords.TYPE.SOA)?.[0] as DNSRecords.SOA | undefined;
+        if (!soaRecord) {
+            return null;
+        }
+        soaRecord.serial = nextSoaSerial(soaRecord.serial);
+
+
         zoneData.records.push(soaRecord);
 
         await this._setZone(zoneData);

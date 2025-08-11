@@ -15,11 +15,13 @@ export class DNSServer {
             udp: true,
             async handle(request, send, rinfo) {
                 const [ question ] = request.questions;
-                const { name, type, class: cls } = question as { name: string; type: DNSRecords.VALID_TYPE, class: DNSRecords.VALID_CLASS };
+                const { name, type, class: cls } = question as { name: string; type: DNSRecords.TYPES, class: DNSRecords.CLASSES };
 
                 const response = Packet.createResponseFromRequest(request);
 
-                response.answers.push(...await dnsRecordStore.getRecords(name, type, cls));
+                if (cls === DNSRecords.CLASS.IN) {
+                    response.answers.push(...await dnsRecordStore.getRecords(name, type));
+                }
 
                 send(response);
             }
