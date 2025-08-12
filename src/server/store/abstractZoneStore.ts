@@ -33,16 +33,15 @@ export abstract class AbstractDNSZoneStore extends AbstractDNSRecordStore {
 
     async setZone(zone: DNSZone) {
 
-        const soaRecord = zone.records.get(zone.name.toLowerCase())?.get(DNSRecords.TYPE.SOA)?.[0] as DNSRecords.SOA | undefined;
+        const soaRecord = zone.records.get(zone.name)?.get(DNSRecords.TYPE.SOA)?.[0] as DNSRecords.SOA | undefined;
         if (!soaRecord) {
             return null;
         }
         soaRecord.serial = DNSRecords.Util.nextSoaSerial(soaRecord.serial);
 
+        zone.records.get(zone.name)?.set(DNSRecords.TYPE.SOA, [soaRecord]);
 
-        zoneData.records.push(soaRecord);
-
-        await this._setZone(zoneData);
+        await this._setZone(zone);
     }
 
     async deleteZone(name: string): Promise<void> {
@@ -51,6 +50,14 @@ export abstract class AbstractDNSZoneStore extends AbstractDNSRecordStore {
 
     async existsZone(name: string): Promise<boolean> {
         return this._existsZone(name);
+    }
+
+    async getRecords(name: string, type: DNSRecords.TYPES): Promise<DNSRecords.Record[]> {
+        const zone = await this.getZone(name);
+        if (!zone) {
+            return [];
+        }
+        return zone.records.get(name)?.get(type) || [];
     }
 
 }
