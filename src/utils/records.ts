@@ -44,13 +44,13 @@ export namespace DNSRecords {
 
     export interface Record {
         name: string;
+        ttl: number;
         [data: string]: any;
     }
 
     export interface ResponseRecord extends Record {
         type: TYPES;
         class: CLASSES;
-        ttl: number;
     }
 
     export interface A extends Record {
@@ -93,7 +93,7 @@ export namespace DNSRecords {
 
 export namespace DNSRecords.Util {
 
-    export function nextSoaSerial(currentSerial: number) {
+    export function nextSoaSerial(currentSerial?: number) {
         const now = new Date();
 
         // Create today's base serial: YYYYMMDD

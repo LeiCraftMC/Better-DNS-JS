@@ -20,7 +20,14 @@ export class DNSServer {
                 const response = Packet.createResponseFromRequest(request);
 
                 if (cls === DNSRecords.CLASS.IN) {
-                    response.answers.push(...await dnsRecordStore.getRecords(name, type));
+
+                    (await dnsRecordStore.getRecords(name, type)).forEach(record => {
+                        response.answers.push({
+                            ...record,
+                            type,
+                            class: cls
+                        });
+                    });
                 }
 
                 send(response);

@@ -20,15 +20,17 @@ export class DNSZone {
             name,
             primary: setting.nsDomain,
             admin: setting.nsAdminEmail,
-            serial: 1,
-            refresh: 3600,
-            retry: 1800,
-            expiration: 604800,
-            minimum: 3600
+            serial: DNSRecords.Util.nextSoaSerial(),
+            refresh: setting.defaultSOASettings.refresh || 3600,
+            retry: setting.defaultSOASettings.retry || 1800,
+            expiration: setting.defaultSOASettings.expiration || 604800,
+            minimum: setting.defaultSOASettings.minimum || 3600,
+            ttl: setting.defaultSOASettings.ttl || 3600,
         };
         const primaryNSRecord: DNSRecords.NS = {
             name,
-            ns: setting.nsDomain
+            ns: setting.nsDomain,
+            ttl: setting.defaultSOASettings.ttl || 3600
         };
 
         apexRecords.set(DNSRecords.TYPE.SOA, [soaRecord]);
@@ -92,7 +94,7 @@ export abstract class AbstractDNSZoneStore extends AbstractDNSRecordStore {
         return this._existsZone(name);
     }
 
-    async getRecords(name: string, type: DNSRecords.TYPES): Promise<DNSRecords.Record[]> {
+    async getRecords(name: string, type: DNSRecords.TYPES) {
         const zone = await this.getZone(name);
         if (!zone) {
             return [];
