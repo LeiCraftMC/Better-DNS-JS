@@ -11,6 +11,40 @@ export class DNSZone {
         public records: DNSZoneRecords
     ) {}
 
+    static create(name: string, setting: DNSZoneStoreOptions): DNSZone {
+        const records = new Map<string, Map<DNSRecords.TYPES, DNSRecords.Record[]>>();
+
+        const apexRecords = new Map<DNSRecords.TYPES, DNSRecords.Record[]>();
+
+        const soaRecord: DNSRecords.SOA = {
+            name,
+            primary: setting.nsDomain,
+            admin: setting.nsAdminEmail,
+            serial: 1,
+            refresh: 3600,
+            retry: 1800,
+            expiration: 604800,
+            minimum: 3600
+        };
+        const primaryNSRecord: DNSRecords.NS = {
+            name,
+            ns: setting.nsDomain
+        };
+
+        apexRecords.set(DNSRecords.TYPE.SOA, [soaRecord]);
+        apexRecords.set(DNSRecords.TYPE.NS, [primaryNSRecord]);
+
+        records.set(name, apexRecords);
+
+        return new DNSZone(name, records);
+    }
+
+}
+
+export interface DNSZoneStoreOptions {
+    nsDomain: string;
+    nsAdminEmail: string;
+    defaultSOASettings: Omit<DNSRecords.SOA, "type" | "primary" | "admin">;
 }
 
 export abstract class AbstractDNSZoneStore extends AbstractDNSRecordStore {
@@ -21,8 +55,14 @@ export abstract class AbstractDNSZoneStore extends AbstractDNSRecordStore {
     protected abstract _deleteZone(name: string): Promise<void>;
     protected abstract _existsZone(name: string): Promise<boolean>;
 
+    constructor(
+        private readonly option: Readonly<DNSZoneStoreOptions>
+    ) {
+        super();
+    }
+
     async createZone(name: string): Promise<DNSZone> {
-        const zone = new DNSZone(name, []);
+        const zone = DNSZone.create(name, this.option);
         await this.setZone(zone);
         return zone;
     }

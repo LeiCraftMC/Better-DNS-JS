@@ -44,45 +44,39 @@ export namespace DNSRecords {
 
     export interface Record {
         name: string;
-        type: TYPES;
-        class: CLASSES;
-        ttl: number;
         [data: string]: any;
     }
 
+    export interface ResponseRecord extends Record {
+        type: TYPES;
+        class: CLASSES;
+        ttl: number;
+    }
+
     export interface A extends Record {
-        type: typeof DNSRecords.TYPE.A;
         address: string;
     }
 
-    export interface AAAA extends Record {
-        type: typeof DNSRecords.TYPE.AAAA;
-        address: string;
-    }
+    export interface AAAA extends A {}
 
     export interface CNAME extends Record {
-        type: typeof DNSRecords.TYPE.CNAME;
         domain: string;
     }
 
     export interface MX extends Record {
-        type: typeof DNSRecords.TYPE.MX;
         exchange: string;
         priority: number;
     }
 
     export interface NS extends Record {
-        type: typeof DNSRecords.TYPE.NS;
         ns: string;
     }
 
     export interface PTR extends Record {
-        type: typeof DNSRecords.TYPE.PTR;
         domain: string;
     }
 
     export interface SOA extends Record {
-        type: typeof DNSRecords.TYPE.SOA;
         primary: string;
         admin: string;
         serial: number;
@@ -93,7 +87,6 @@ export namespace DNSRecords {
     }
 
     export interface TXT extends Record {
-        type: typeof DNSRecords.TYPE.TXT;
         data: string | string[];
     }
 }
