@@ -59,9 +59,7 @@ export abstract class AbstractDNSZoneStore extends AbstractDNSRecordStore {
 
     constructor(
         private readonly option: Readonly<DNSZoneStoreOptions>
-    ) {
-        super();
-    }
+    ) {super()}
 
     async createZone(name: string): Promise<DNSZone> {
         const zone = DNSZone.create(name, this.option);
