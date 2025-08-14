@@ -1,4 +1,4 @@
-import { createServer as createDNSServer, Packet } from 'dns2';
+import DNS, { createServer as createDNSServer, Packet } from 'dns2';
 import { DNSRecords } from '../utils/records';
 import { AbstractDNSRecordStore } from './store/abstractRecordStore';
 
@@ -32,6 +32,27 @@ export class DNSServer {
                 send(response);
             }
         });
+    }
+
+    async start() {
+
+        const listenOptions: DNS.DnsServerListenOptions = {};
+
+        if (this.options.protocol === "udp" || this.options.protocol === "both") {
+            listenOptions.udp = {
+                port: this.options.port,
+                address: this.options.ip
+            };
+        }
+
+        if (this.options.protocol === "tcp" || this.options.protocol === "both") {
+            listenOptions.tcp = {
+                port: this.options.port,
+                address: this.options.ip
+            };
+        }
+
+        this.dnsServer.listen(listenOptions);
     }
 
 }
