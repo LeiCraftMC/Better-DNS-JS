@@ -2,13 +2,12 @@ import { createServer as createDNSServer, Packet } from 'dns2';
 import { DNSRecords } from '../utils/records';
 import { AbstractDNSRecordStore } from './store/abstractRecordStore';
 
-
 export class DNSServer {
 
     protected readonly dnsServer: ReturnType<typeof createDNSServer>;
 
     constructor(
-        protected readonly dnsRecordStore: AbstractDNSRecordStore
+        protected readonly options: Readonly<DNSServer.Options>
     ) {
         this.dnsServer = createDNSServer({
             tcp: true,
@@ -21,7 +20,7 @@ export class DNSServer {
 
                 if (cls === DNSRecords.CLASS.IN) {
 
-                    (await dnsRecordStore.getRecords(name, type)).forEach(record => {
+                    (await options.dnsRecordStore.getRecords(name, type)).forEach(record => {
                         response.answers.push({
                             ...record,
                             type,
@@ -33,6 +32,17 @@ export class DNSServer {
                 send(response);
             }
         });
+    }
+
+}
+
+export namespace DNSServer {
+
+    export interface Options {
+        port: number;
+        ip: string;
+        protocol: "udp" | "tcp" | "both";
+        dnsRecordStore: AbstractDNSRecordStore;
     }
 
 }
