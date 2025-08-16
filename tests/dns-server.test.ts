@@ -13,7 +13,7 @@ describe("dns_server", () => {
             protocol: "udp",
             dnsRecordStore: new BasicInMemoryDNSZoneStore({
                 nsDomain: "ns.example.com",
-                nsAdminEmail: "admin@example.com"
+                nsAdminEmail: "admin.ns.example.com"
             })
         });
 
@@ -93,7 +93,7 @@ describe("dns_server", () => {
         expect(soa_response.type).toBe(DNSRecords.TYPE.SOA);
         expect(soa_response.class).toBe(DNSRecords.CLASS.IN);
         expect((soa_response as any as DNSRecords.SOA).primary).toBe("ns.example.com");
-        expect((soa_response as any as DNSRecords.SOA).admin).toBe("admin@example.com");
+        expect((soa_response as any as DNSRecords.SOA).admin).toBe("admin.ns.example.com");
         expect((soa_response as any as DNSRecords.SOA).serial).toBe(DNSZone.Util.nextSoaSerial() + 2);
         expect((soa_response as any as DNSRecords.SOA).refresh).toBe(3600);
         expect((soa_response as any as DNSRecords.SOA).retry).toBe(1800);

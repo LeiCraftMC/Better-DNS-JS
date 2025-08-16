@@ -2,6 +2,7 @@
   "compilerOptions": {
     "lib": ["ESNext"],
     "target": "ESNext",
+    "module": "esnext",
     "moduleResolution": "node",
     "sourceMap": true,
     "strict": true,
@@ -14,6 +15,7 @@
   },
 	"include": [
     "src/**/*",
-    "tests/**/*"
+    "tests/**/*",
+    "examples/**/*"
   ]
 }
