@@ -41,7 +41,24 @@ describe("dns_server", () => {
             data: "v=spf1 include:example.com -all",
             ttl: 3600
         });
-
+        zone.setRecord("domain.tld", DNSRecords.TYPE.SPF, {
+            data: "v=spf1 include:example.com -all",
+            ttl: 3600
+        });
+        zone.setRecord("domain.tld", DNSRecords.TYPE.CAA, {
+            flags: 0,
+            tag: "issuewild",
+            value: "letsencrypt.org",
+            ttl: 3600
+        });
+        zone.setRecord("_srv._tcp.domain.tld", DNSRecords.TYPE.SRV, {
+            priority: 10,
+            weight: 5,
+            port: 8080,
+            target: "srv.domain.tld",
+            ttl: 3600
+        });
+        
         await server.recordStore.setZone(zone);
 
         const client = new DNS({
@@ -57,6 +74,9 @@ describe("dns_server", () => {
         const txt_response = (await client.query("domain.tld", "TXT", DNSRecords.CLASS.IN)).answers[0] as DNS.DnsAnswer;
         const soa_response = (await client.query("domain.tld", "SOA", DNSRecords.CLASS.IN)).answers[0] as DNS.DnsAnswer;
         const ns_response = (await client.query("domain.tld", "NS", DNSRecords.CLASS.IN)).answers[0] as DNS.DnsAnswer;
+        const spf_response = (await client.query("domain.tld", "SPF", DNSRecords.CLASS.IN)).answers[0] as DNS.DnsAnswer;
+        const caa_response = (await client.query("domain.tld", "CAA", DNSRecords.CLASS.IN)).answers[0] as DNS.DnsAnswer;
+        const srv_response = (await client.query("_srv._tcp.domain.tld", "SRV", DNSRecords.CLASS.IN)).answers[0] as DNS.DnsAnswer;
 
         expect(a_response.name).toBe("domain.tld");
         expect(a_response.type).toBe(DNSRecords.TYPE.A);
@@ -106,6 +126,29 @@ describe("dns_server", () => {
         expect(ns_response.class).toBe(DNSRecords.CLASS.IN);
         expect((ns_response as any as DNSRecords.NS).ns).toBe("ns.example.com");
         expect(ns_response.ttl).toBe(3600);
+
+        expect(spf_response.name).toBe("domain.tld");
+        expect(spf_response.type).toBe(DNSRecords.TYPE.SPF);
+        expect(spf_response.class).toBe(DNSRecords.CLASS.IN);
+        expect(spf_response.data).toBe("v=spf1 include:example.com -all");
+        expect(spf_response.ttl).toBe(3600);
+
+        // expect(caa_response.name).toBe("domain.tld");
+        // expect(caa_response.type).toBe(DNSRecords.TYPE.CAA);
+        // expect(caa_response.class).toBe(DNSRecords.CLASS.IN);
+        // expect((caa_response as any as DNSRecords.CAA).flags).toBe(0);
+        // expect((caa_response as any as DNSRecords.CAA).tag).toBe("issuewild");
+        // expect((caa_response as any as DNSRecords.CAA).value).toBe("letsencrypt.org");
+        // expect(caa_response.ttl).toBe(3600);
+
+        expect(srv_response.name).toBe("_srv._tcp.domain.tld");
+        expect(srv_response.type).toBe(DNSRecords.TYPE.SRV);
+        expect(srv_response.class).toBe(DNSRecords.CLASS.IN);
+        expect((srv_response as any as DNSRecords.SRV).priority).toBe(10);
+        expect((srv_response as any as DNSRecords.SRV).weight).toBe(5);
+        expect((srv_response as any as DNSRecords.SRV).port).toBe(8080);
+        expect((srv_response as any as DNSRecords.SRV).target).toBe("srv.domain.tld");
+        expect(srv_response.ttl).toBe(3600);
     });
 
     test("utility_functions", () => {
