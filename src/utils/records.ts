@@ -8,6 +8,9 @@ export type DNSRecords = {
     0x0C: DNSRecords.PTR;
     0x06: DNSRecords.SOA;
     0x10: DNSRecords.TXT;
+    0x21: DNSRecords.SRV;
+    0x63: DNSRecords.SPF;
+    0x101: DNSRecords.CAA;
 }
 
 export namespace DNSRecords {
@@ -30,14 +33,14 @@ export namespace DNSRecords {
         MX    : 0x0F,
         TXT   : 0x10,
         AAAA  : 0x1C,
-        // SRV   : 0x21,
+        SRV   : 0x21,
         // EDNS  : 0x29,
-        // SPF   : 0x63,
+        SPF   : 0x63,
         // AXFR  : 0xFC,
         // MAILB : 0xFD,
         // MAILA : 0xFE,
         // ANY   : 0xFF,
-        // CAA   : 0x101
+        CAA   : 0x101
     } as const;
 
     export type TYPES = typeof DNSRecords.TYPE[keyof typeof DNSRecords.TYPE];
@@ -82,10 +85,8 @@ export namespace DNSRecords {
         ns: string;
     }
 
-    export interface PTR extends RecordData {
-        domain: string;
-    }
-
+    export interface PTR extends CNAME {}
+    
     export interface SOA extends RecordData {
         primary: string;
         admin: string;
@@ -96,7 +97,22 @@ export namespace DNSRecords {
         minimum: number;
     }
 
+    export interface SRV extends RecordData {
+        priority: number;
+        weight: number;
+        port: number;
+        target: string;
+    }
+
     export interface TXT extends RecordData {
         data: string | string[];
+    }
+
+    export interface SPF extends TXT {}
+
+    export interface CAA extends RecordData {
+        flags: number;
+        tag: string;
+        value: string;
     }
 }
