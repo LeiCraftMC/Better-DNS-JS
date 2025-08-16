@@ -17,11 +17,11 @@ export class DNSZone {
         const soaRecord: DNSRecords.SOA = {
             primary: setting.nsDomain,
             admin: setting.nsAdminEmail,
-            serial: DNSRecords.Util.nextSoaSerial(),
+            serial: DNSZone.Util.nextSoaSerial(),
             refresh: setting.defaultSOASettings?.refresh || 3600,
             retry: setting.defaultSOASettings?.retry || 1800,
             expiration: setting.defaultSOASettings?.expiration || 604800,
-            minimum: setting.defaultSOASettings?.minimum || 3600,
+            minimum: setting.defaultSOASettings?.minimum || 86400,
             ttl: setting.defaultSOASettings?.ttl || 3600,
         };
         const primaryNSRecord: DNSRecords.NS = {
@@ -73,5 +73,60 @@ export class DNSZone {
 }
 
 export namespace DNSZone {
+
     export type Records = Map<string, Map<DNSRecords.TYPES, DNSRecords.RecordData[]>>;
+
+}
+
+export namespace DNSZone.Util {
+
+    export function getZoneNames(domain: string, withTopLevel = false): string[] {
+        const parts = domain.split(".");
+        const zones: string[] = [];
+
+        for (let i = 0; i < parts.length; i++) {
+            if (i === parts.length - 1 && !withTopLevel) {
+                continue;
+            }
+            zones.push(parts.slice(i).join("."));
+        }
+
+        return zones;
+    }
+
+    export function nextSoaSerial(currentSerial?: number) {
+        const now = new Date();
+
+        // Create today's base serial: YYYYMMDD
+        const todayBase = now.getFullYear().toString() +
+            String(now.getMonth() + 1).padStart(2, '0') +
+            String(now.getDate()).padStart(2, '0');
+
+        const todayBaseNum = parseInt(todayBase, 10);
+
+        if (!currentSerial) {
+            // If no serial exists yet, start with today's date + 00
+            return parseInt(todayBase + '00', 10);
+        }
+
+        const currentDatePart = Math.floor(currentSerial / 100); // first 8 digits
+        let counter = currentSerial % 100; // last 2 digits
+
+        if (currentDatePart === todayBaseNum) {
+            // Same date → increment counter
+            counter++;
+            if (counter > 99) {
+                throw new Error('SOA serial overflow for today — max 99 edits per day.');
+            }
+        } else if (currentDatePart < todayBaseNum) {
+            // New day → reset counter
+            counter = 0;
+        } else {
+            throw new Error('Current serial is from the future — check your clock.');
+        }
+
+        return parseInt(todayBase + String(counter).padStart(2, '0'), 10);
+    }
+
+
 }

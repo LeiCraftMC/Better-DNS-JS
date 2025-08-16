@@ -1,23 +1,22 @@
-import { AbstractDNSZoneStore, DNSZone } from "./abstractZoneStore";
+import { AbstractDNSZoneStore } from "./abstractZoneStore";
+import type { DNSZone } from "./dnsZone";
 
 export class BasicInMemoryDNSZoneStore extends AbstractDNSZoneStore {
 
     private readonly zones: Map<string, DNSZone> = new Map();
 
-    protected _createZone(name: string): Promise<void> {
-        throw new Error("Method not implemented.");
+    protected async _getZone(name: string): Promise<DNSZone | null> {
+        return this.zones.get(name) || null;
     }
-    protected _getZone(name: string): Promise<DNSZone | null> {
-        throw new Error("Method not implemented.");
+    protected async _setZone(zone: DNSZone): Promise<boolean> {
+        this.zones.set(zone.name, zone);
+        return true;
     }
-    protected _setZone(zone: DNSZone): Promise<void> {
-        throw new Error("Method not implemented.");
+    protected async _deleteZone(name: string): Promise<boolean> {
+        return this.zones.delete(name);
     }
-    protected _deleteZone(name: string): Promise<void> {
-        throw new Error("Method not implemented.");
-    }
-    protected _existsZone(name: string): Promise<boolean> {
-        throw new Error("Method not implemented.");
+    protected async _existsZone(name: string): Promise<boolean> {
+        return this.zones.has(name);
     }
 
 }
