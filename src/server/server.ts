@@ -46,14 +46,14 @@ export class DNSServer<R extends AbstractDNSRecordStore = AbstractDNSRecordStore
         if (this.options.protocol === "udp" || this.options.protocol === "both") {
             listenOptions.udp = {
                 port: this.options.port,
-                address: this.options.ip
+                address: this.options.host
             };
         }
 
         if (this.options.protocol === "tcp" || this.options.protocol === "both") {
             listenOptions.tcp = {
                 port: this.options.port,
-                address: this.options.ip
+                address: this.options.host
             };
         }
 
@@ -66,7 +66,7 @@ export namespace DNSServer {
 
     export interface Options<R extends AbstractDNSRecordStore = AbstractDNSRecordStore> {
         port: number;
-        ip: string;
+        host: string;
         protocol: "udp" | "tcp" | "both";
         dnsRecordStore: R;
     }
