@@ -1,6 +1,7 @@
 import { DNSRecords } from "../../utils/records";
 import type { AbstractDNSZoneStore } from "./abstractZoneStore";
 
+type MakeOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
 export class DNSZone {
 
@@ -41,10 +42,15 @@ export class DNSZone {
         return this.records.get(name)?.get(type) as RDATA[] || [];
     }
 
-    public setRecord<TYPE extends DNSRecords.TYPES, RDATA extends DNSRecords.RecordData = DNSRecords[TYPE]>(name: string, type: TYPE, recordData: RDATA): void {
+    public setRecord<TYPE extends DNSRecords.TYPES, RDATA extends MakeOptional<DNSRecords.RecordData, "ttl"> = MakeOptional<DNSRecords[TYPE], "ttl">>(name: string, type: TYPE, recordData: RDATA): void {
         const zoneRecords = this.records.get(name) || new Map<DNSRecords.TYPES, DNSRecords.RecordData[]>();
         const records = zoneRecords.get(type) || [];
-        records.push(recordData);
+
+        if (!recordData.ttl) {
+            recordData.ttl = 3600;
+        }
+
+        records.push(recordData as DNSRecords.RecordData);
         zoneRecords.set(type, records);
         this.records.set(name, zoneRecords);
     }
