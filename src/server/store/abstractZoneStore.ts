@@ -15,6 +15,10 @@ export abstract class AbstractDNSZoneStore extends AbstractDNSRecordStore {
         private readonly option: Readonly<AbstractDNSZoneStore.Options>
     ) {super()}
 
+    /**
+     * Creates a new DNS zone with the given name.
+     * IMPORTANT: You must call {@link updateZone} to save the zone to the store and make changes persistent.
+     */
     async createZone(name: string): Promise<DNSZone> {
         const zone = DNSZone.create(name, this.option);
         await this.updateZone(zone);
