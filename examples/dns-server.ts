@@ -2,7 +2,7 @@ import { BasicInMemoryDNSZoneStore, DNSRecords, DNSServer } from "better-dns";
 
 const server = new DNSServer({
     port: 53,
-    ip: "0.0.0.0",
+    host: "::",
     protocol: "both",
     dnsRecordStore: new BasicInMemoryDNSZoneStore({
         nsDomain: "ns.example.com",
@@ -55,5 +55,5 @@ await server.recordStore.setZone(zone);
 
 
 await server.start();
-console.log("DNS server started on 0.0.0.0:53");
+console.log("DNS server started on [::]:53");
 
