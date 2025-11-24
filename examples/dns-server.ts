@@ -51,7 +51,7 @@ zone.setRecord("_srv._tcp.domain.tld", DNSRecords.TYPE.SRV, {
     ttl: 3600
 });
 
-await server.recordStore.setZone(zone);
+await server.recordStore.updateZone(zone);
 
 
 await server.start();

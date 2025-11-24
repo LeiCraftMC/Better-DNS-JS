@@ -59,7 +59,7 @@ describe("dns_server", () => {
             ttl: 3600
         });
         
-        await server.recordStore.setZone(zone);
+        await server.recordStore.updateZone(zone);
 
         const client = new DNS({
             nameServers: [

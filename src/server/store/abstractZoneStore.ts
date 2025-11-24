@@ -17,7 +17,7 @@ export abstract class AbstractDNSZoneStore extends AbstractDNSRecordStore {
 
     async createZone(name: string): Promise<DNSZone> {
         const zone = DNSZone.create(name, this.option);
-        await this.setZone(zone);
+        await this.updateZone(zone);
         return zone;
     }
 
@@ -25,7 +25,13 @@ export abstract class AbstractDNSZoneStore extends AbstractDNSRecordStore {
         return this._getZone(name);
     }
 
+    /**
+     * @deprecated Use {@link updateZone} instead.
+     */
     async setZone(zone: DNSZone) {
+        return await this.updateZone(zone);
+    }
+    async updateZone(zone: DNSZone) {
 
         const soaRecord = zone.records.get(zone.name)?.get(DNSRecords.TYPE.SOA)?.[0] as DNSRecords.SOA | undefined;
         if (!soaRecord) {
