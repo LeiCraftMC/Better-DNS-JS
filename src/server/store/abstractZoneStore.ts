@@ -35,6 +35,7 @@ export abstract class AbstractDNSZoneStore extends AbstractDNSRecordStore {
     async setZone(zone: DNSZone) {
         return await this.updateZone(zone);
     }
+    
     async updateZone(zone: DNSZone) {
 
         const soaRecord = zone.records.get(zone.name)?.get(DNSRecords.TYPE.SOA)?.[0] as DNSRecords.SOA | undefined;

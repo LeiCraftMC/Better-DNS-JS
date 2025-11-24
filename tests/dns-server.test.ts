@@ -10,7 +10,7 @@ describe("dns_server", () => {
         const server = new DNSServer({
             port: 53,
             host: "::",
-            protocol: "udp",
+            protocol: "both",
             dnsRecordStore: new BasicInMemoryDNSZoneStore({
                 nsDomain: "ns.example.com",
                 nsAdminEmail: "admin.ns.example.com"
