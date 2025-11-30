@@ -21,7 +21,7 @@ export class DNSServer<R extends AbstractDNSRecordStore = AbstractDNSRecordStore
                 const { name, type, class: cls } = question as { name: string; type: DNSRecords.TYPES, class: DNSRecords.CLASSES };
 
                 const response = Packet.createResponseFromRequest(request);
-
+                console.log(request)
                 // @ts-ignore You are not doing recursion, so make that clear
                 response.header.ra = 0;
 
