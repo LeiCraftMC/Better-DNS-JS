@@ -30,12 +30,13 @@ export class DNSServer<R extends AbstractDNSRecordStore = AbstractDNSRecordStore
 
                 
                 // @ts-ignore Handle EDNS (copy from request)
-                request.additionals.forEach(add => {
-                    if (add.type === Packet.TYPE.EDNS) { // @ts-ignore
-                        response.additionals.push(Packet.Resource.EDNS(add.rdata));
-                    }
-                });
-                console.log(request)
+                // request.additionals.forEach(add => {
+                //     if (add.type === Packet.TYPE.EDNS) { // @ts-ignore
+                //         response.additionals.push(Packet.Resource.EDNS(add.rdata));
+                //     }
+                // });
+                // @ts-ignore
+                response.additionals.push(Packet.Resource.EDNS([]));
 
 
                 if (cls === DNSRecords.CLASS.IN) {
