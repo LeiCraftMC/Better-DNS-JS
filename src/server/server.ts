@@ -21,10 +21,21 @@ export class DNSServer<R extends AbstractDNSRecordStore = AbstractDNSRecordStore
                 const { name, type, class: cls } = question as { name: string; type: DNSRecords.TYPES, class: DNSRecords.CLASSES };
 
                 const response = Packet.createResponseFromRequest(request);
+                
+                // @ts-ignore Mark this as an authoritative answer
+                response.header.aa = 1;
+
+                // @ts-ignore You are not doing recursion, so make that clear
+                response.header.ra = 0;
+
+                // @ts-ignore AD should only be set for DNSSEC, so ensure it's off 
+                response.header.ad = 0;
 
                 if (cls === DNSRecords.CLASS.IN) {
 
-                    (await options.dnsRecordStore.getRecords(name, type)).forEach(recordData => {
+                    const records = await options.dnsRecordStore.getRecords(name, type);
+
+                    records.forEach(recordData => {
                         response.answers.push({
                             name,
                             type,
