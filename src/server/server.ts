@@ -18,10 +18,12 @@ export class DNSServer<R extends AbstractDNSRecordStore = AbstractDNSRecordStore
             udp: true,
             async handle(request, send, rinfo) {
                 const [ question ] = request.questions;
-                const { name, type, class: cls } = question as { name: string; type: DNSRecords.TYPES, class: DNSRecords.CLASSES };
+                const { name: unparsedName, type, class: cls } = question as { name: string; type: DNSRecords.TYPES, class: DNSRecords.CLASSES };
+
+                const name = (unparsedName.endsWith('.') ? unparsedName.slice(0, -1) : unparsedName).toLowerCase();
 
                 const response = Packet.createResponseFromRequest(request);
-                console.log(request)
+
                 // @ts-ignore You are not doing recursion, so make that clear
                 response.header.ra = 0;
 
