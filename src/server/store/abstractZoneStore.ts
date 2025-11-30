@@ -57,12 +57,15 @@ export abstract class AbstractDNSZoneStore extends AbstractDNSRecordStore {
         return this._existsZone(name);
     }
 
-    async getRecords(name: string, type: DNSRecords.TYPES) {
-
+    async getAuthority(name: string): Promise<DNSRecords.ResponseWithoutClass[]> {
         const zoneNames = DNSZone.Util.getZoneNames(name);
 
         for (const zoneName of zoneNames) {
             const zone = await this.getZone(zoneName);
+
+            if (!zone) {
+                continue;
+            }
             
             const authorityRecords: DNSRecords.ResponseWithoutClass[] = [];
 
@@ -74,18 +77,31 @@ export abstract class AbstractDNSZoneStore extends AbstractDNSRecordStore {
 
             authorityRecords.push(soaRecord);
 
-            // authorityRecords.push(...zone?.records.get(zoneName)?.get(DNSRecords.TYPE.NS)?.map(nsRecord => ({
-            //     name: zoneName,
-            //     type: DNSRecords.TYPE.NS,
-            //     ...nsRecord
-            // })) || []);
+            authorityRecords.push(...zone?.records.get(zoneName)?.get(DNSRecords.TYPE.NS)?.map(nsRecord => ({
+                name: zoneName,
+                type: DNSRecords.TYPE.NS,
+                ...nsRecord
+            })) || []);
+
+            return authorityRecords;
+
+        }
+        return [];
+    }
+
+    async getRecords(name: string, type: DNSRecords.TYPES) {
+
+        const zoneNames = DNSZone.Util.getZoneNames(name);
+
+        for (const zoneName of zoneNames) {
+            const zone = await this.getZone(zoneName);
 
             if (!zone) {
                 continue;
             }
             return {
                 answers: zone.records.get(name)?.get(type) || [],
-                authorities: authorityRecords,
+                authorities: [],
                 additionals: []
             }
         }

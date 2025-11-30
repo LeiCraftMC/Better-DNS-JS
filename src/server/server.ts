@@ -52,7 +52,21 @@ export class DNSServer<R extends AbstractDNSRecordStore = AbstractDNSRecordStore
                         });
                     });
 
-                    if (authorities.length > 0) {
+                    if (answers.length === 0) {
+                        // @ts-ignore NXDOMAIN
+                        response.header.rcode = 0x03;
+
+                        const soaRecord = (await options.dnsRecordStore.getAuthority(name))[0];
+                        if (soaRecord) {
+                            // @ts-ignore
+                            response.authorities.push({
+                                class: cls,
+                                ...soaRecord
+                            });
+                            // @ts-ignore Mark this as an authoritative answer
+                            response.header.aa = 1;
+                        }
+                    } else {
                         // @ts-ignore Mark this as an authoritative answer
                         response.header.aa = 1;
                     }
