@@ -63,12 +63,37 @@ export abstract class AbstractDNSZoneStore extends AbstractDNSRecordStore {
 
         for (const zoneName of zoneNames) {
             const zone = await this.getZone(zoneName);
+            
+            const authorityRecords: DNSRecords.ResponseWithoutClass[] = [];
+
+            const soaRecord: DNSRecords.ResponseWithoutClass = {
+                name: zoneName,
+                type: DNSRecords.TYPE.SOA,
+                ...zone?.records.get(zoneName)?.get(DNSRecords.TYPE.SOA)?.[0] as DNSRecords.SOA,
+            }
+
+            authorityRecords.push(soaRecord);
+
+            authorityRecords.push(...zone?.records.get(zoneName)?.get(DNSRecords.TYPE.NS)?.map(nsRecord => ({
+                name: zoneName,
+                type: DNSRecords.TYPE.NS,
+                ...nsRecord
+            })) || []);
+
             if (!zone) {
                 continue;
             }
-            return zone.records.get(name)?.get(type) || [];
+            return {
+                answers: zone.records.get(name)?.get(type) || [],
+                authorities: authorityRecords,
+                additionals: []
+            }
         }
-        return [];
+        return {
+            answers: [],
+            authorities: [],
+            additionals: []
+        };
     }
 
 }

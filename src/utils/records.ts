@@ -43,7 +43,13 @@ export namespace DNSRecords {
         CAA   : 0x101
     } as const;
 
+    export const SYSTEM_TYPES = {
+        EDNS: 0x29
+    }
+
     export type TYPES = typeof DNSRecords.TYPE[keyof typeof DNSRecords.TYPE];
+
+    export type SYSTEM_TYPES = typeof DNSRecords.SYSTEM_TYPES[keyof typeof DNSRecords.SYSTEM_TYPES];
 
     export const CLASS = {
         IN  : 0x01,
@@ -61,10 +67,12 @@ export namespace DNSRecords {
 
     export interface ResponseRecord extends RecordData {
         name: string;
-        type: TYPES;
+        type: TYPES | SYSTEM_TYPES;
         class: CLASSES;
-        [data: string]: any;
+        // [data: string]: unknown;
     }
+
+    export type ResponseWithoutClass = Omit<DNSRecords.ResponseRecord, "class">;
 
     export interface A extends RecordData {
         address: string;

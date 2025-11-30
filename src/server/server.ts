@@ -31,16 +31,41 @@ export class DNSServer<R extends AbstractDNSRecordStore = AbstractDNSRecordStore
                 // @ts-ignore AD should only be set for DNSSEC, so ensure it's off 
                 response.header.ad = 0;
 
+                
+                // @ts-ignore Handle EDNS (copy from request)
+                request.additionals.forEach(add => {
+                    if (add.type === Packet.TYPE.EDNS) { // @ts-ignore
+                        response.additionals.push(Packet.Resource.EDNS(add.rdata));
+                    }
+                });
+
+
                 if (cls === DNSRecords.CLASS.IN) {
 
-                    const records = await options.dnsRecordStore.getRecords(name, type);
+                    const { answers, authorities, additionals } = await options.dnsRecordStore.getRecords(name, type);
 
-                    records.forEach(recordData => {
+                    answers.forEach(recordData => {
                         response.answers.push({
                             name,
                             type,
                             class: cls,
                             ...recordData
+                        });
+                    });
+
+                    authorities.forEach(data => { 
+                        // @ts-ignore
+                        response.authorities.push({
+                            class: cls,
+                            ...data
+                        });
+                    });
+
+                    additionals.forEach(data => {
+                        // @ts-ignore
+                        response.additionals.push({
+                            class: cls,
+                            ...data
                         });
                     });
                 }
