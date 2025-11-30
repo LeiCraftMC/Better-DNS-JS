@@ -21,9 +21,6 @@ export class DNSServer<R extends AbstractDNSRecordStore = AbstractDNSRecordStore
                 const { name, type, class: cls } = question as { name: string; type: DNSRecords.TYPES, class: DNSRecords.CLASSES };
 
                 const response = Packet.createResponseFromRequest(request);
-                
-                // @ts-ignore Mark this as an authoritative answer
-                response.header.aa = 1;
 
                 // @ts-ignore You are not doing recursion, so make that clear
                 response.header.ra = 0;
@@ -52,6 +49,11 @@ export class DNSServer<R extends AbstractDNSRecordStore = AbstractDNSRecordStore
                             ...recordData
                         });
                     });
+
+                    if (authorities.length > 0) {
+                        // @ts-ignore Mark this as an authoritative answer
+                        response.header.aa = 1;
+                    }
 
                     authorities.forEach(data => { 
                         // @ts-ignore
