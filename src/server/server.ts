@@ -35,6 +35,7 @@ export class DNSServer<R extends AbstractDNSRecordStore = AbstractDNSRecordStore
                         response.additionals.push(Packet.Resource.EDNS(add.rdata));
                     }
                 });
+                console.log(request)
 
 
                 if (cls === DNSRecords.CLASS.IN) {
