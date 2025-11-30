@@ -26,7 +26,7 @@ export class DNSServer<R extends AbstractDNSRecordStore = AbstractDNSRecordStore
                 response.header.ra = 0;
 
                 // @ts-ignore AD should only be set for DNSSEC, so ensure it's off 
-                response.header.ad = 0;
+                // response.header.ad = 0;
 
                 
                 // @ts-ignore Handle EDNS (copy from request)
