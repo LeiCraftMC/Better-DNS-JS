@@ -74,11 +74,11 @@ export abstract class AbstractDNSZoneStore extends AbstractDNSRecordStore {
 
             authorityRecords.push(soaRecord);
 
-            authorityRecords.push(...zone?.records.get(zoneName)?.get(DNSRecords.TYPE.NS)?.map(nsRecord => ({
-                name: zoneName,
-                type: DNSRecords.TYPE.NS,
-                ...nsRecord
-            })) || []);
+            // authorityRecords.push(...zone?.records.get(zoneName)?.get(DNSRecords.TYPE.NS)?.map(nsRecord => ({
+            //     name: zoneName,
+            //     type: DNSRecords.TYPE.NS,
+            //     ...nsRecord
+            // })) || []);
 
             if (!zone) {
                 continue;
