@@ -17,10 +17,6 @@ export class DNSServer<R extends AbstractDNSRecordStore = AbstractDNSRecordStore
             tcp: true,
             udp: true,
             async handle(request, send, rinfo) {
-                const [ question ] = request.questions;
-                const { name: unparsedName, type, class: cls } = question as { name: string; type: DNSRecords.TYPES, class: DNSRecords.CLASSES };
-
-                const name = (unparsedName.endsWith('.') ? unparsedName.slice(0, -1) : unparsedName).toLowerCase();
 
                 const response = Packet.createResponseFromRequest(request);
 
@@ -37,57 +33,69 @@ export class DNSServer<R extends AbstractDNSRecordStore = AbstractDNSRecordStore
                 //         response.additionals.push(Packet.Resource.EDNS(add.rdata));
                 //     }
                 // });
+
                 // @ts-ignore
                 response.additionals.push(Packet.Resource.EDNS([]));
 
+                try {
+                    const [ question ] = request.questions;
+                    const { name: unparsedName, type, class: cls } = question as { name: string; type: DNSRecords.TYPES, class: DNSRecords.CLASSES };
 
-                if (cls === DNSRecords.CLASS.IN) {
+                    const name = (unparsedName.endsWith('.') ? unparsedName.slice(0, -1) : unparsedName).toLowerCase();
 
-                    const { answers, authorities, additionals } = await options.dnsRecordStore.getRecords(name, type);
 
-                    answers.forEach(recordData => {
-                        response.answers.push({
-                            name,
-                            type,
-                            class: cls,
-                            ...recordData
-                        });
-                    });
+                    if (cls === DNSRecords.CLASS.IN) {
 
-                    if (answers.length === 0) {
-                        // @ts-ignore NXDOMAIN
-                        response.header.rcode = 0x03;
+                        const { answers, authorities, additionals } = await options.dnsRecordStore.getRecords(name, type);
 
-                        const soaRecord = (await options.dnsRecordStore.getAuthority(name))[0];
-                        if (soaRecord) {
-                            // @ts-ignore
-                            response.authorities.push({
+                        answers.forEach(recordData => {
+                            response.answers.push({
+                                name,
+                                type,
                                 class: cls,
-                                ...soaRecord
+                                ...recordData
                             });
+                        });
+
+                        if (answers.length === 0) {
+                            // @ts-ignore NXDOMAIN
+                            response.header.rcode = 0x03;
+
+                            const soaRecord = (await options.dnsRecordStore.getAuthority(name))[0];
+                            if (soaRecord) {
+                                // @ts-ignore
+                                response.authorities.push({
+                                    class: cls,
+                                    ...soaRecord
+                                });
+                                // @ts-ignore Mark this as an authoritative answer
+                                response.header.aa = 1;
+                            }
+                        } else {
                             // @ts-ignore Mark this as an authoritative answer
                             response.header.aa = 1;
                         }
-                    } else {
-                        // @ts-ignore Mark this as an authoritative answer
-                        response.header.aa = 1;
+
+                        authorities.forEach(data => { 
+                            // @ts-ignore
+                            response.authorities.push({
+                                class: cls,
+                                ...data
+                            });
+                        });
+
+                        additionals.forEach(data => {
+                            // @ts-ignore
+                            response.additionals.push({
+                                class: cls,
+                                ...data
+                            });
+                        });
                     }
-
-                    authorities.forEach(data => { 
-                        // @ts-ignore
-                        response.authorities.push({
-                            class: cls,
-                            ...data
-                        });
-                    });
-
-                    additionals.forEach(data => {
-                        // @ts-ignore
-                        response.additionals.push({
-                            class: cls,
-                            ...data
-                        });
-                    });
+                } catch (err) {
+                    if (options.logErrors) {
+                        console.log('Error handling DNS request:', err);
+                    }
                 }
 
                 send(response);
@@ -125,6 +133,7 @@ export namespace DNSServer {
         host: string;
         protocol: "udp" | "tcp" | "both";
         dnsRecordStore: R;
+        logErrors?: boolean;
     }
 
 }
