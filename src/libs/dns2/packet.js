@@ -97,6 +97,7 @@ Packet.TYPE = {
   EDNS  : 0x29,
   SPF   : 0x63,
   AXFR  : 0xFC,
+  IXFR  : 0xFB,
   MAILB : 0xFD,
   MAILA : 0xFE,
   ANY   : 0xFF,
