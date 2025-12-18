@@ -6,26 +6,26 @@ import * as net from "net";
 import type { BufferWriter } from "./lib/writer";
 import type { BufferReader } from "./lib/reader";
 
-export declare class Packet {
+declare class _Packet {
 
-    readonly header: Packet.Header;
-    readonly questions: Packet.IQuestion[];
-    readonly answers: Packet.IResource[];
-    readonly authorities: Packet.IResource[];
-    readonly additionals: Packet.IResource[];
+    readonly header: DNS.Packet.Header;
+    readonly questions: DNS.Packet.IQuestion[];
+    readonly answers: DNS.Packet.IResource[];
+    readonly authorities: DNS.Packet.IResource[];
+    readonly additionals: DNS.Packet.IResource[];
 
     constructor();
-    constructor(packet: Packet);
-    constructor(header: Packet.Header);
-    constructor(questios: Packet.Question);
-    constructor(answer: Packet.Resource);
+    constructor(packet: DNS.Packet);
+    constructor(header: DNS.Packet.Header);
+    constructor(questios: DNS.Packet.Question);
+    constructor(answer: DNS.Packet.Resource);
 
     static createResponseFromRequest(request: DNS.Packet): DNS.Packet;
     
     toBuffer(): Buffer;
 }
 
-export declare namespace Packet {
+declare namespace _Packet {
 
     const OPCODE: {
         readonly QUERY: 0x00;
@@ -73,12 +73,12 @@ export declare namespace Packet {
         readonly ANY: 0xff;
     };
 
-    declare type Writer = BufferWriter;
-    declare const Writer: typeof BufferWriter;
-    declare type Reader = BufferReader;
-    declare const Reader: typeof BufferReader;
+    type Writer = BufferWriter;
+    const Writer: typeof BufferWriter;
+    type Reader = BufferReader;
+    const Reader: typeof BufferReader;
 
-    declare interface IHeader {
+    interface IHeader {
         id: number;
         qr: number;
         opcode: number;
@@ -92,7 +92,7 @@ export declare namespace Packet {
         nscount: number;
         arcount: number;
     }
-    class Header implements Packet.IHeader {
+    class Header implements DNS.Packet.IHeader {
         id: number;
         qr: number;
         opcode: number;
@@ -106,19 +106,19 @@ export declare namespace Packet {
         nscount: number;
         arcount: number;
 
-        constructor(header: Partial<Packet.Header>);
+        constructor(header: Partial<DNS.Packet.Header>);
 
-        static parse(buffer: Buffer | Packet.Reader): Packet.Header;
+        static parse(buffer: Buffer | DNS.Packet.Reader): DNS.Packet.Header;
 
-        public toBuffer(writer?: Packet.Writer): Buffer;
+        public toBuffer(writer?: DNS.Packet.Writer): Buffer;
     }
 
-    declare interface IQuestion {
+    interface IQuestion {
         name: string;
         type: DNS.PacketType;
         class: DNS.PacketClass;
     }
-    declare class Question implements IQuestion {
+    class Question implements IQuestion {
         name: string;
         type: DNS.PacketType;
         class: DNS.PacketClass;
@@ -126,20 +126,20 @@ export declare namespace Packet {
         constructor(name: string, type: DNS.PacketClass, cls: DNS.PacketType);
         constructor(question: Question);
 
-        toBuffer(writer?: Packet.Writer): Buffer;
+        toBuffer(writer?: DNS.Packet.Writer): Buffer;
 
-        static parse(buffer: Buffer | Packet.Reader): Question;
-        static decode(buffer: Buffer | Packet.Reader): Question;
-        static encode(question: Question, writer?: Packet.Writer): Buffer;
+        static parse(buffer: Buffer | DNS.Packet.Reader): Question;
+        static decode(buffer: Buffer | DNS.Packet.Reader): Question;
+        static encode(question: Question, writer?: DNS.Packet.Writer): Buffer;
     }
 
-    declare interface IResource {
+    interface IResource {
         name: string;
         ttl: number;
         type: DNS.PacketType;
         class: DNS.PacketClass;
     }
-    declare class Resource implements IResource {
+    class Resource implements IResource {
         name: string;
         ttl: number;
         type: DNS.PacketType;
@@ -148,11 +148,11 @@ export declare namespace Packet {
         constructor(name: string, type: DNS.PacketClass, cls: DNS.PacketType, ttl: number);
         constructor(resource: Resource);
 
-        toBuffer(writer?: Packet.Writer): Buffer;
+        toBuffer(writer?: DNS.Packet.Writer): Buffer;
 
-        static parse(buffer: Buffer | Packet.Reader): Resource;
-        static decode(buffer: Buffer | Packet.Reader): Resource;
-        static encode(resource: Resource, writer?: Packet.Writer): Buffer;
+        static parse(buffer: Buffer | DNS.Packet.Reader): Resource;
+        static decode(buffer: Buffer | DNS.Packet.Reader): Resource;
+        static encode(resource: Resource, writer?: DNS.Packet.Writer): Buffer;
     }
 
 }
@@ -324,10 +324,8 @@ declare class DNS {
     resolveCNAME(domain: string): Promise<DNS.DnsResponse>;
 }
 
-namespace DNS {
-
-    export import Packet = Packet;
-
+declare namespace DNS {
+    export import Packet = _Packet;
 }
 
 export = DNS;
