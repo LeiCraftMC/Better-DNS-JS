@@ -32,6 +32,10 @@ export class SlaveSettings {
         }
     }
 
+    public isSlaveAllowed(address: string): boolean {
+        return this.slaveServers.some(server => server.address === address);
+    }
+
     async sendNOTIFY() {
         for (const server of this.slaveServers) {
 

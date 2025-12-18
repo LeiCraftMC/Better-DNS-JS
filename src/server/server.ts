@@ -1,3 +1,4 @@
+import type { RemoteInfo } from 'dgram';
 import DNS, { createServer as createDNSServer, Packet } from '../libs/dns2';
 import { DNSRecords } from '../utils/records';
 import { AbstractDNSRecordStore } from './store/abstractRecordStore';
@@ -117,24 +118,30 @@ export namespace DNSServer {
             }
         }
 
-        private static async beforeRequestHandle(question: DNS.Packet.IQuestion, response: DNS.Packet, dnsRecordStore: AbstractDNSRecordStore, send: DNS.DnsSendResponseFn) {
+        private static async beforeRequestHandle(rinfo: RemoteInfo, question: DNS.Packet.IQuestion, response: DNS.Packet, dnsRecordStore: AbstractDNSRecordStore, send: DNS.DnsSendResponseFn) {
             
             if (question.type !== DNSRecords.SYSTEM_TYPES.AXFR) {
                 RequestHandler.addEDNSAdditionals(response);
             }
 
             if(question.type === DNSRecords.SYSTEM_TYPES.AXFR) {
-                await RequestHandler.handleAXFRRequest(question, response, dnsRecordStore, send);
+                await RequestHandler.handleAXFRRequest(rinfo, question, response, dnsRecordStore, send);
                 return false;
             } 
 
             return true;
         }
 
-        private static async handleAXFRRequest(question: DNS.Packet.IQuestion, response: DNS.Packet, dnsRecordStore: AbstractDNSRecordStore, send: DNS.DnsSendResponseFn) {
+        private static async handleAXFRRequest(rinfo: RemoteInfo, question: DNS.Packet.IQuestion, response: DNS.Packet, dnsRecordStore: AbstractDNSRecordStore, send: DNS.DnsSendResponseFn) {
 
             const slaveConfig = await dnsRecordStore.getSlaveSettings(RequestHandler.normalizeName(question.name));
             if (!slaveConfig) {
+                response.header.rcode = 0x05; // REFUSED
+                send(response, false);
+                return;
+            }
+
+            if (!slaveConfig.isSlaveAllowed(rinfo.address)) {
                 response.header.rcode = 0x05; // REFUSED
                 send(response, false);
                 return;
@@ -220,7 +227,7 @@ export namespace DNSServer {
 
                     if (cls === DNSRecords.CLASS.IN) {
 
-                        const continueHandling = await RequestHandler.beforeRequestHandle(question, response, opts.dnsRecordStore, send);
+                        const continueHandling = await RequestHandler.beforeRequestHandle(rinfo, question, response, opts.dnsRecordStore, send);
                         if (!continueHandling) {
                             return;
                         }
