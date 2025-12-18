@@ -1,7 +1,7 @@
 import { BasicInMemoryDNSZoneStore, DNSRecords, DNSServer } from "better-dns";
 
 const server = new DNSServer({
-    port: 53,
+    port: process.env.DNS_PORT ? parseInt(process.env.DNS_PORT) : 53,
     host: "::",
     protocol: "both",
     dnsRecordStore: new BasicInMemoryDNSZoneStore({
