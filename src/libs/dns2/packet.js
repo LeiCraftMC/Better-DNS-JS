@@ -392,7 +392,8 @@ Packet.Question.encode = function(question, writer) {
  * @param {number} cls [description]
  * @param {number} ttl [description]
  * @docs https://tools.ietf.org/html/rfc1035#section-4.1.3
- * @returns {Packet.Resource}
+ * @returns {any}
+ * @type Class
  */
 Packet.Resource = function(name, type, cls, ttl) {
   const defaults = {
