@@ -20,14 +20,14 @@ export class DNSServer<R extends AbstractDNSRecordStore = AbstractDNSRecordStore
 
                 const response = Packet.createResponseFromRequest(request);
 
-                // @ts-ignore You are not doing recursion, so make that clear
+                // You are not doing recursion, so make that clear
                 response.header.ra = 0;
 
-                // @ts-ignore AD should only be set for DNSSEC, so ensure it's off 
+                // AD should only be set for DNSSEC, so ensure it's off 
                 // response.header.ad = 0;
 
                 
-                // @ts-ignore Handle EDNS (copy from request)
+                // Handle EDNS (copy from request)
                 // request.additionals.forEach(add => {
                 //     if (add.type === Packet.TYPE.EDNS) { // @ts-ignore
                 //         response.additionals.push(Packet.Resource.EDNS(add.rdata));
@@ -39,7 +39,7 @@ export class DNSServer<R extends AbstractDNSRecordStore = AbstractDNSRecordStore
 
                 try {
                     const [ question ] = request.questions;
-                    const { name: unparsedName, type, class: cls } = question as Packet.Question;
+                    const { name: unparsedName, type, class: cls } = question;
 
                     const name = (unparsedName.endsWith('.') ? unparsedName.slice(0, -1) : unparsedName).toLowerCase();
 
@@ -58,21 +58,20 @@ export class DNSServer<R extends AbstractDNSRecordStore = AbstractDNSRecordStore
                         });
 
                         if (answers.length === 0) {
-                            // @ts-ignore NXDOMAIN
+                            // NXDOMAIN
                             response.header.rcode = 0x03;
 
                             const soaRecord = (await options.dnsRecordStore.getAuthority(name))[0];
                             if (soaRecord) {
-                                // @ts-ignore
                                 response.authorities.push({
                                     class: cls,
                                     ...soaRecord
                                 });
-                                // @ts-ignore Mark this as an authoritative answer
+                                // Mark this as an authoritative answer
                                 response.header.aa = 1;
                             }
                         } else {
-                            // @ts-ignore Mark this as an authoritative answer
+                            // Mark this as an authoritative answer
                             response.header.aa = 1;
                         }
 

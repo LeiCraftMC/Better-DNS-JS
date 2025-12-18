@@ -45,7 +45,7 @@ export namespace DNSRecords {
 
     export const SYSTEM_TYPES = {
         EDNS: 0x29
-    }
+    } as const;
 
     export type TYPES = typeof DNSRecords.TYPE[keyof typeof DNSRecords.TYPE];
 

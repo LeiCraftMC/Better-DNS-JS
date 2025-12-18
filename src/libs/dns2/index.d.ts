@@ -8,8 +8,19 @@ import type { BufferReader } from "./lib/reader";
 
 export declare class Packet {
 
+    readonly header: Packet.Header;
+    readonly questions: Packet.IQuestion[];
+    readonly answers: Packet.IResource[];
+    readonly authorities: Packet.IResource[];
+    readonly additionals: Packet.IResource[];
 
-    static createResponseFromRequest(request: DNS.DnsRequest): DNS.DnsResponse;
+    constructor();
+    constructor(packet: Packet);
+    constructor(header: Packet.Header);
+    constructor(questios: Packet.Question);
+    constructor(answer: Packet.Resource);
+
+    static createResponseFromRequest(request: DNS.Packet): DNS.Packet;
     
     toBuffer(): Buffer;
 }
@@ -52,7 +63,26 @@ export declare namespace Packet {
         readonly ANY: 0xff;
     };
 
-    declare class Header {
+    declare type Writer = BufferWriter;
+    declare const Writer: typeof BufferWriter;
+    declare type Reader = BufferReader;
+    declare const Reader: typeof BufferReader;
+
+    declare interface IHeader {
+        id: number;
+        qr: number;
+        opcode: number;
+        aa: number;
+        tc: number;
+        rd: number;
+        ra: number;
+        z: number;
+        rcode: number;
+        qdcount: number;
+        nscount: number;
+        arcount: number;
+    }
+    class Header implements Packet.IHeader {
         id: number;
         qr: number;
         opcode: number;
@@ -73,13 +103,18 @@ export declare namespace Packet {
         public toBuffer(writer?: Packet.Writer): Buffer;
     }
 
-    declare class Question {
-        name: string
-        type: DNS.PacketClass;
-        class: DNS.PacketType;
+    declare interface IQuestion {
+        name: string;
+        type: DNS.PacketType;
+        class: DNS.PacketClass;
+    }
+    declare class Question implements IQuestion {
+        name: string;
+        type: DNS.PacketType;
+        class: DNS.PacketClass;
 
         constructor(name: string, type: DNS.PacketClass, cls: DNS.PacketType);
-        constructor(obj: Question);
+        constructor(question: Question);
 
         toBuffer(writer?: Packet.Writer): Buffer;
 
@@ -88,14 +123,20 @@ export declare namespace Packet {
         static encode(question: Question, writer?: Packet.Writer): Buffer;
     }
 
-    declare class Resource {
-        name: string
+    declare interface IResource {
+        name: string;
         ttl: number;
-        type: DNS.PacketClass;
-        class: DNS.PacketType;
+        type: DNS.PacketType;
+        class: DNS.PacketClass;
+    }
+    declare class Resource implements IResource {
+        name: string;
+        ttl: number;
+        type: DNS.PacketType;
+        class: DNS.PacketClass;
 
         constructor(name: string, type: DNS.PacketClass, cls: DNS.PacketType, ttl: number);
-        constructor(obj: Resource);
+        constructor(resource: Resource);
 
         toBuffer(writer?: Packet.Writer): Buffer;
 
@@ -103,13 +144,6 @@ export declare namespace Packet {
         static decode(buffer: Buffer | Packet.Reader): Resource;
         static encode(resource: Resource, writer?: Packet.Writer): Buffer;
     }
-
-
-
-    declare type Writer = BufferWriter;
-    declare const Writer: typeof BufferWriter;
-    declare type Reader = BufferReader;
-    declare const Reader: typeof BufferReader;
 
 }
 
@@ -124,9 +158,12 @@ declare namespace DNS {
         rootServers: string[];
     }
 
+    /**
+     * @deprecated Use DNS.Packet instead
+     */
     interface DnsRequest extends Packet {
-        header: { id: string };
-        questions: DnsQuestion[];
+        // header: { id: string };
+        // questions: DnsQuestion[];
     }
 
     /**
@@ -136,8 +173,11 @@ declare namespace DNS {
         name: string;
     }
 
+    /**
+     * @deprecated Use DNS.Packet instead
+     */
     interface DnsResponse extends Packet {
-        answers: DnsAnswer[];
+        // answers: DnsAnswer[];
     }
 
     interface DnsAnswer {
