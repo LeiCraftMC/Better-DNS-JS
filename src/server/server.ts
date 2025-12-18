@@ -76,7 +76,6 @@ export class DNSServer<R extends AbstractDNSRecordStore = AbstractDNSRecordStore
                         }
 
                         authorities.forEach(data => { 
-                            // @ts-ignore
                             response.authorities.push({
                                 class: cls,
                                 ...data
@@ -84,7 +83,6 @@ export class DNSServer<R extends AbstractDNSRecordStore = AbstractDNSRecordStore
                         });
 
                         additionals.forEach(data => {
-                            // @ts-ignore
                             response.additionals.push({
                                 class: cls,
                                 ...data
