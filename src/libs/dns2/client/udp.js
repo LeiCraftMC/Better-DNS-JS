@@ -16,9 +16,8 @@ module.exports = ({ dns = "8.8.8.8", port = 53, socketType = "udp4" } = {}) => {
 		if (nameOrPacket instanceof Packet) {
 			query = nameOrPacket;
 		} else {
-
+			const name = nameOrPacket;
 			query = new Packet();
-
 			query.header.id = (Math.random() * 1e4) | 0;
 
 			// see https://github.com/song940/node-dns/issues/29
@@ -31,7 +30,7 @@ module.exports = ({ dns = "8.8.8.8", port = 53, socketType = "udp4" } = {}) => {
 				);
 			}
 			query.questions.push({
-				nameOrPacket,
+				name,
 				class: cls,
 				type: Packet.TYPE[type],
 			});
