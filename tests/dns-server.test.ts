@@ -8,7 +8,7 @@ describe("dns_server", () => {
     test("should_return_correct_records", async () => {
 
         const server = new DNSServer({
-            port: 53,
+            port: 0,
             host: "::",
             protocol: "both",
             dnsRecordStore: new BasicInMemoryDNSZoneStore({
@@ -57,7 +57,8 @@ describe("dns_server", () => {
         const client = new DNS({
             nameServers: [
                 "127.0.0.1"
-            ]
+            ],
+            port: server["dnsServer"].addresses().udp?.port
         });
 
         const a_response = (await client.query("domain.tld", "A", DNSRecords.CLASS.IN)).answers[0] as DNS.DnsAnswer;
