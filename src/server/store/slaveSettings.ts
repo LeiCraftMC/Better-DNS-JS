@@ -57,7 +57,7 @@ export class SlaveSettings {
 
             const response = await query(packet);
             if (response.header.rcode !== 0) {
-                throw new Error(`Failed to send NOTIFY to ${server.address}:${server.port} - RCODE: ${response.header.rcode}`);
+                // console.error(`Failed to send NOTIFY to ${server.address}:${server.port} - RCODE: ${response.header.rcode}`);
             }
         }
     }
