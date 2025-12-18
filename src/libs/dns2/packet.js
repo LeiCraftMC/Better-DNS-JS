@@ -2,6 +2,38 @@ const { debuglog } = require('util');
 const { BufferReader } = require('./lib/reader');
 const { BufferWriter } = require('./lib/writer');
 
+/**
+ * @typedef {Object} PacketHeader
+ * @property {number} id
+ * @property {number} qr
+ * @property {number} opcode
+ * @property {number} aa
+ * @property {number} tc
+ * @property {number} rd
+ * @property {number} ra
+ * @property {number} z
+ * @property {number} rcode
+ * @property {number} qdcount
+ * @property {number} nscount
+ * @property {number} arcount
+ */
+
+/**
+ * @typedef {Object} PacketQuestion
+ * @property {string} name
+ * @property {number} type
+ * @property {number} class
+ */
+
+/**
+ * @typedef {Object} PacketResource
+ * @property {string} name
+ * @property {number} type
+ * @property {number} class
+ * @property {number} ttl
+ * @property {Buffer} [data]
+ */
+
 const debug = debuglog('dns2');
 
 const toIPv6 = buffer => buffer
@@ -935,6 +967,15 @@ Packet.prototype.toBase64URL = function() {
     .replace(/\//g, '_');
 };
 
+/**
+ * @type {typeof Packet}
+ */
 module.exports = Packet;
+/**
+ * @type {(buffer: Uint8Array) => number[]}
+ */
 module.exports.toIPv6 = toIPv6;
+/**
+ * @type {(address: string) => number[]}
+ */
 module.exports.fromIPv6 = fromIPv6;
