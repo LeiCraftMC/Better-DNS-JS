@@ -35,7 +35,13 @@ export namespace DNSRecords {
         AAAA  : 0x1C,
         SRV   : 0x21,
         // EDNS  : 0x29,
+
+        /**
+         * @deprecated Use TXT records instead
+         */
+        // SPF: 0x10,
         SPF   : 0x63,
+        
         // AXFR  : 0xFC,
         // MAILB : 0xFD,
         // MAILA : 0xFE,
@@ -44,7 +50,10 @@ export namespace DNSRecords {
     } as const;
 
     export const SYSTEM_TYPES = {
-        EDNS: 0x29
+        EDNS: 0x29,
+
+        AXFR: 0xFC,
+        IXFR: 0xFB,
     } as const;
 
     export type TYPES = typeof DNSRecords.TYPE[keyof typeof DNSRecords.TYPE];
