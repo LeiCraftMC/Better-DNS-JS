@@ -2,7 +2,7 @@ import { BasicInMemoryDNSZoneStore, DNSRecords, DNSServer } from "better-dns";
 
 const port = process.env.DNS_PORT ? parseInt(process.env.DNS_PORT) : 53;
 const slaveAddress = process.env.SLAVE_DNS_ADDRESS || "127.0.0.1";
-const slavePort = process.env.SLAVE_DNS_PORT ? parseInt(process.env.SLAVE_DNS_PORT) : 5353;
+const slavePort = process.env.SLAVE_DNS_PORT ? parseInt(process.env.SLAVE_DNS_PORT) : 53;
 
 const server = new DNSServer({
     port: port,
