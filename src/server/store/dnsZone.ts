@@ -1,5 +1,6 @@
 import { DNSRecords } from "../../utils/records";
 import type { AbstractDNSZoneStore } from "./abstractZoneStore";
+import type { SlaveSettings } from "./slaveSettings";
 
 type MakeOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
@@ -7,7 +8,8 @@ export class DNSZone {
 
     constructor(
         readonly name: string,
-        readonly records: DNSZone.Records
+        readonly records: DNSZone.Records,
+        readonly slaveSettings?: SlaveSettings
     ) {}
 
     static create(name: string, setting: AbstractDNSZoneStore.Options): DNSZone {

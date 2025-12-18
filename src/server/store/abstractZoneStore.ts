@@ -1,6 +1,7 @@
 import { DNSRecords } from "../../utils/records";
 import { AbstractDNSRecordStore } from "./abstractRecordStore";
 import { DNSZone } from "./dnsZone";
+import type { SlaveSettings } from "./slaveSettings";
 
 
 
@@ -133,6 +134,14 @@ export abstract class AbstractDNSZoneStore extends AbstractDNSRecordStore {
         }
 
         return records;
+    }
+
+    async getSlaveSettings(zoneName: string): Promise<SlaveSettings | null> {
+        const zone = await this.getZone(zoneName);
+        if (!zone) {
+            return null;
+        }
+        return zone.slaveSettings || null;
     }
 
 }
