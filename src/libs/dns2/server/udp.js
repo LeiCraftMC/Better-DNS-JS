@@ -28,7 +28,7 @@ class Server extends udp.Socket {
     }
   }
 
-  response(rinfo, message) {
+  response(rinfo, message, preventClose = false) {
     if (message instanceof Packet) { message = message.toBuffer(); }
     return new Promise((resolve, reject) => {
       this.send(message, rinfo.port, rinfo.address, err => {

@@ -112,6 +112,29 @@ export abstract class AbstractDNSZoneStore extends AbstractDNSRecordStore {
         };
     }
 
+    async getAllRecordsForZone(zoneName: string): Promise<DNSRecords.ResponseWithoutClass[]> {
+        const zone = await this.getZone(zoneName);
+        if (!zone) {
+            return [];
+        }
+
+        const records: DNSRecords.ResponseWithoutClass[] = [];
+        
+        for (const [name, typeMap] of zone.records.entries()) {
+            for (const [type, recordDatas] of typeMap.entries()) {
+                for (const recordData of recordDatas) {
+                    records.push({
+                        name,
+                        type,
+                        ...recordData
+                    });
+                }
+            }
+        }
+
+        return records;
+    }
+
 }
 
 export namespace AbstractDNSZoneStore {

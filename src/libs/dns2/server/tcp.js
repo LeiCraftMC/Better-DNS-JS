@@ -21,12 +21,16 @@ class Server extends tcp.Server {
     }
   }
 
-  response(client, message) {
+  response(client, message, preventClose = false) {
     if (message instanceof Packet) {
       message = message.toBuffer();
     }
     const len = Buffer.alloc(2);
     len.writeUInt16BE(message.length);
+    if (preventClose) {
+      client.write(Buffer.concat([ len, message ]));
+      return;
+    }
     client.end(Buffer.concat([ len, message ]));
   }
 }

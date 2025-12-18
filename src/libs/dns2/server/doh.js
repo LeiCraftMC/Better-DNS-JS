@@ -118,10 +118,14 @@ class Server extends EventEmitter {
    * @param {*} res
    * @param {*} message
    */
-  response(res, message) {
+  response(res, message, preventClose = false) {
     debug('response');
     res.setHeader('Content-Type', 'application/dns-message');
     res.writeHead(200);
+    if (preventClose) {
+      res.write(message.toBuffer());
+      return;
+    }
     res.end(message.toBuffer());
   }
 

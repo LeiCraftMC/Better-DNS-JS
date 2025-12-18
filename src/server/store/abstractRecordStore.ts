@@ -1,5 +1,6 @@
 import type { DNSQuery } from "../../utils/query";
 import { DNSRecords } from "../../utils/records";
+import type { SlaveSettings } from "./slaveSettings";
 
 export abstract class AbstractDNSRecordStore {
 
@@ -22,6 +23,8 @@ export abstract class AbstractDNSRecordStore {
      * @param name The zone name to get all records for
      */
     abstract getAllRecordsForZone(zoneName: string): Promise<DNSRecords.ResponseWithoutClass[]>;
+
+    abstract getSlaveSettings(zoneName: string): Promise<SlaveSettings | null>;
 }
 
 export namespace AbstractDNSRecordStore.Types {

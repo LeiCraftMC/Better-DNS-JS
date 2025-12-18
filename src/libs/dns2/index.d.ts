@@ -203,9 +203,11 @@ declare namespace DNS {
 
     type DnsHandler = (
         request: DnsRequest,
-        sendResponse: (response: DnsResponse) => void,
+        sendResponse: DnsSendResponseFn,
         remoteInfo: udp.RemoteInfo,
     ) => void;
+
+    type DnsSendResponseFn = (response: DnsResponse, preventClose?: boolean) => void;
 
     type PacketClass = typeof Packet.CLASS[keyof typeof Packet.CLASS];
     type PacketType = typeof Packet.TYPE[keyof typeof Packet.TYPE];

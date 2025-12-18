@@ -117,7 +117,7 @@ export namespace DNSServer {
             }
         }
 
-        private static async beforeRequestHandle(question: DNS.Packet.IQuestion, response: DNS.Packet, dnsRecordStore: AbstractDNSRecordStore, send: (response: DNS.Packet) => void) {
+        private static async beforeRequestHandle(question: DNS.Packet.IQuestion, response: DNS.Packet, dnsRecordStore: AbstractDNSRecordStore, send: DNS.DnsSendResponseFn) {
             
             if (question.type !== DNSRecords.SYSTEM_TYPES.AXFR) {
                 RequestHandler.addEDNSAdditionals(response);
@@ -131,7 +131,7 @@ export namespace DNSServer {
             return true;
         }
 
-        private static async handleAXFRRequest(question: DNS.Packet.IQuestion, response: DNS.Packet, dnsRecordStore: AbstractDNSRecordStore, send: (response: DNS.Packet) => void) {
+        private static async handleAXFRRequest(question: DNS.Packet.IQuestion, response: DNS.Packet, dnsRecordStore: AbstractDNSRecordStore, send: DNS.DnsSendResponseFn) {
 
             const zoneRecords = await dnsRecordStore.getAllRecordsForZone(RequestHandler.normalizeName(question.name));
             const soaRecords = zoneRecords.filter(record => record.type === DNSRecords.TYPE.SOA);
@@ -139,7 +139,7 @@ export namespace DNSServer {
             if (soaRecords.length === 0) {
                 // No SOA record found for zone, cannot perform AXFR
                 response.header.rcode = 0x03; // NXDOMAIN
-                send(response);
+                send(response, false);
                 return;
             }
 
@@ -153,7 +153,7 @@ export namespace DNSServer {
                 class: question.class,
                 ...soaRecord
             });
-            send(response);
+            send(response, true);
 
             // Add all other records
             zoneRecords.forEach(recordData => {
@@ -164,7 +164,7 @@ export namespace DNSServer {
                         class: question.class,
                         ...recordData
                     });
-                    send(response);
+                    send(response, true);
                 }
             });
 
@@ -175,7 +175,7 @@ export namespace DNSServer {
                 class: question.class,
                 ...soaRecord
             });
-            send(response);
+            send(response, false);
         }
 
         private static async addEDNSAdditionals(response: DNS.Packet) {
