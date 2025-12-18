@@ -27,6 +27,15 @@ export declare class Packet {
 
 export declare namespace Packet {
 
+    const OPCODE: {
+        readonly QUERY: 0x00;
+        readonly IQUERY: 0x01;
+        readonly STATUS: 0x02;
+        readonly NOTIFY: 0x04;
+        readonly UPDATE: 0x05;
+        readonly DSO: 0x06;
+    }
+
     const TYPE: {
         readonly A: 0x01;
         readonly NS: 0x02;
@@ -223,12 +232,22 @@ declare namespace DNS {
         clientIp?: string;
     }
 
-    type DnsResolver = (
-        name: string,
-        type?: DNS.PacketQuestion,
-        cls?: DNS.PacketClass,
-        options?: DNS.DnsResolveOptions,
-    ) => Promise<DNS.DnsResponse>;
+    interface DnsResolver {
+        (name: string,
+         type?: DNS.PacketQuestion,
+         cls?: DNS.PacketClass,
+         options?: DNS.DnsResolveOptions,
+        ): Promise<DNS.DnsResponse>;
+    }
+
+    interface ExtendedDnsResolver extends DnsResolver {
+        (name: string,
+         type?: DNS.PacketQuestion,
+         cls?: DNS.PacketClass,
+         clientIp?: string
+        ): Promise<DNS.DnsResponse>;
+        (packet: DNS.Packet): Promise<DNS.DnsResponse>;
+    }
 
     interface TCPClientOptions {
         dns: string;
@@ -287,9 +306,9 @@ declare class DNS {
     static createTCPServer: (...options: ConstructorParameters<typeof TcpDnsServer>) => TcpDnsServer;
     static TCPServer: typeof TcpDnsServer;
 
-    static TCPClient: (options: DNS.TCPClientOptions) => DNS.DnsResolver;
-    static DOHClient: (options: DNS.DOHClientOptions) => DNS.DnsResolver;
-    static UDPClient: (options: DNS.UDPClientOptions) => DNS.DnsResolver;
+    static TCPClient: (options: DNS.TCPClientOptions) => DNS.ExtendedDnsResolver;
+    static DOHClient: (options: DNS.DOHClientOptions) => DNS.ExtendedDnsResolver;
+    static UDPClient: (options: DNS.UDPClientOptions) => DNS.ExtendedDnsResolver;
     static GoogleClient: () => DNS.DnsResolver;
 
     query(name: string, type: DNS.PacketQuestion, cls?: DNS.PacketClass, clientIp?: string): Promise<DNS.DnsResponse>;
