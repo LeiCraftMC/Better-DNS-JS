@@ -68,9 +68,9 @@ export namespace DNSServer {
             return (unparsedName.endsWith('.') ? unparsedName.slice(0, -1) : unparsedName).toLowerCase();
         }
 
-        private static async addAnswers(question: DNS.Packet.IQuestion, response: DNS.Packet, dnsRecordStore: AbstractDNSRecordStore, answers: DNSRecords.RecordData[]) {
+        private static async addAnswers(question: DNS.Packet.IQuestion, response: DNS.Packet, dnsRecordStore: AbstractDNSRecordStore, records: DNSRecords.RecordData[]) {
 
-            if (answers.length === 0) {
+            if (records.length === 0) {
                 // NXDOMAIN
                 response.header.rcode = 0x03;
 
@@ -88,7 +88,7 @@ export namespace DNSServer {
                 response.header.aa = 1;
             }
 
-            answers.forEach(recordData => {
+            records.forEach(recordData => {
                 response.answers.push({
                     name: question.name,
                     type: question.type,
@@ -117,6 +117,80 @@ export namespace DNSServer {
             }
         }
 
+        private static async beforeRequestHandle(question: DNS.Packet.IQuestion, response: DNS.Packet, dnsRecordStore: AbstractDNSRecordStore, send: (response: DNS.Packet) => void) {
+            
+            if (question.type !== DNSRecords.SYSTEM_TYPES.AXFR) {
+                RequestHandler.addEDNSAdditionals(response);
+            }
+
+            if(question.type === DNSRecords.SYSTEM_TYPES.AXFR) {
+                await RequestHandler.handleAXFRRequest(question, response, dnsRecordStore, send);
+                return false;
+            } 
+
+            return true;
+        }
+
+        private static async handleAXFRRequest(question: DNS.Packet.IQuestion, response: DNS.Packet, dnsRecordStore: AbstractDNSRecordStore, send: (response: DNS.Packet) => void) {
+
+            const zoneRecords = await dnsRecordStore.getAllRecordsForZone(RequestHandler.normalizeName(question.name));
+            const soaRecords = zoneRecords.filter(record => record.type === DNSRecords.TYPE.SOA);
+
+            if (soaRecords.length === 0) {
+                // No SOA record found for zone, cannot perform AXFR
+                response.header.rcode = 0x03; // NXDOMAIN
+                send(response);
+                return;
+            }
+
+            // AXFR requires the response to start and end with the SOA record
+            const soaRecord = soaRecords[0];
+
+            // Start with SOA
+            // @ts-ignore
+            response.answers = [];
+            response.answers.push({
+                class: question.class,
+                ...soaRecord
+            });
+            send(response);
+
+            // Add all other records
+            zoneRecords.forEach(recordData => {
+                if (recordData.type !== DNSRecords.TYPE.SOA) {
+                    // @ts-ignore
+                    response.answers = [];
+                    response.answers.push({
+                        class: question.class,
+                        ...recordData
+                    });
+                    send(response);
+                }
+            });
+
+            // End with SOA
+            // @ts-ignore
+            response.answers = [];
+            response.answers.push({
+                class: question.class,
+                ...soaRecord
+            });
+            send(response);
+        }
+
+        private static async addEDNSAdditionals(response: DNS.Packet) {
+            // Handle EDNS (copy from request)
+            // request.additionals.forEach(add => {
+            //     if (add.type === Packet.TYPE.EDNS) { // @ts-ignore
+            //         response.additionals.push(Packet.Resource.EDNS(add.rdata));
+            //     }
+            // });
+
+            // @ts-ignore
+            response.additionals.push(Packet.Resource.EDNS([]));
+        }
+
+
         public getHandleFn(): DNS.DnsHandler {
             const opts = this.options;
 
@@ -130,17 +204,6 @@ export namespace DNSServer {
                 // AD should only be set for DNSSEC, so ensure it's off 
                 // response.header.ad = 0;
 
-
-                // Handle EDNS (copy from request)
-                // request.additionals.forEach(add => {
-                //     if (add.type === Packet.TYPE.EDNS) { // @ts-ignore
-                //         response.additionals.push(Packet.Resource.EDNS(add.rdata));
-                //     }
-                // });
-
-                // @ts-ignore
-                response.additionals.push(Packet.Resource.EDNS([]));
-
                 try {
                     const [ question ] = request.questions;
                     const { name: unparsedName, type, class: cls } = question;
@@ -149,6 +212,11 @@ export namespace DNSServer {
 
 
                     if (cls === DNSRecords.CLASS.IN) {
+
+                        const continueHandling = await RequestHandler.beforeRequestHandle(question, response, opts.dnsRecordStore, send);
+                        if (!continueHandling) {
+                            return;
+                        }
 
                         let answers: DNSRecords.RecordData[];
                         let authorities: DNSRecords.ResponseWithoutClass[] | undefined;

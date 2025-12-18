@@ -21,7 +21,7 @@ export abstract class AbstractDNSRecordStore {
      * Get all records for a given zone
      * @param name The zone name to get all records for
      */
-    abstract getAllRecordsForZone(name: string): Promise<DNSQuery.Response>;
+    abstract getAllRecordsForZone(zoneName: string): Promise<DNSRecords.ResponseWithoutClass[]>;
 }
 
 export namespace AbstractDNSRecordStore.Types {
