@@ -1,9 +1,9 @@
-const tcp = require("net");
-const Packet = require("../packet");
+import { connect as tcp_connect } from 'net';
+import { Packet } from '../packet';
 
-module.exports = ({ dns = "1.1.1.1", port = 53 } = {}) => {
+export const TCPClient = ({ dns = "1.1.1.1", port = 53 } = {}) => {
     return async (
-        nameOrPacket,
+        nameOrPacket: string | Packet,
         type = "A",
         cls = Packet.CLASS.IN,
         { clientIp, recursive = true } = {}
@@ -35,7 +35,7 @@ module.exports = ({ dns = "1.1.1.1", port = 53 } = {}) => {
         const message = packet.toBuffer();
         const len = Buffer.alloc(2);
         len.writeUInt16BE(message.length);
-        const client = tcp.connect({ host: dns, port });
+        const client = tcp_connect({ host: dns, port });
         client.end(Buffer.concat([len, message]));
         const data = await Packet.readStream(client);
         if (!data.length) {

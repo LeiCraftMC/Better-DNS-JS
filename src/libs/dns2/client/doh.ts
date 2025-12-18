@@ -1,13 +1,13 @@
-const Packet = require("../packet");
+import { Packet } from '../packet';
 
 const defaultGet = (url) =>
-    new Promise((resolve, reject) => {
+    new Promise(async (resolve, reject) => {
         const headers = {
             accept: "application/dns-message",
         };
         const base = url.startsWith("https")
-            ? require("https")
-            : require("http");
+            ? await import("https")
+            : await import("http");
         const req = base.get(url, { headers }, resolve);
         req.on("error", reject);
     });
@@ -62,4 +62,4 @@ const DOHClient = ({ dns, http, get = defaultGet } = {}) => {
     };
 };
 
-module.exports = DOHClient;
+export { DOHClient };

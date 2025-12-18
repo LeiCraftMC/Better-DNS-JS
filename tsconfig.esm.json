@@ -4,5 +4,6 @@
 		"outDir": "./dist/esm",
 		"module": "ESNext"
 	},
-	"include": ["src/**/*"]
+	"include": ["src/**/*"],
+	"exclude": ["src/libs/**/*"]
 }

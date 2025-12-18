@@ -1,10 +1,10 @@
-import DNS, { createServer as createDNSServer, Packet } from '../libs/dns2';
+import DNS from '../libs/dns2';
 import { DNSRecords } from '../utils/records';
 import { AbstractDNSRecordStore } from './store/abstractRecordStore';
 
 export class DNSServer<R extends AbstractDNSRecordStore = AbstractDNSRecordStore> {
 
-    protected readonly dnsServer: ReturnType<typeof createDNSServer>;
+    protected readonly dnsServer: InstanceType<typeof DNS.DNSServer>;
     protected readonly requestHandler: DNSServer.RequestHandler<R>;
 
     readonly recordStore: R;
@@ -16,7 +16,7 @@ export class DNSServer<R extends AbstractDNSRecordStore = AbstractDNSRecordStore
 
         this.requestHandler = options.requestHandler ?? new DNSServer.RequestHandler(options);
 
-        this.dnsServer = createDNSServer({
+        this.dnsServer = DNS.createServer({
             tcp: true,
             udp: true,
             handle: this.requestHandler.getHandleFn()
@@ -187,7 +187,7 @@ export namespace DNSServer {
             // });
 
             // @ts-ignore
-            response.additionals.push(Packet.Resource.EDNS([]));
+            response.additionals.push(DNS.Packet.Resource.EDNS([]));
         }
 
 
@@ -196,7 +196,7 @@ export namespace DNSServer {
 
             return async function handle(request, send, rinfo) {
 
-                const response = Packet.createResponseFromRequest(request);
+                const response = DNS.Packet.createResponseFromRequest(request);
 
                 // You are not doing recursion, so make that clear
                 response.header.ra = 0;

@@ -1,5 +1,5 @@
-const udp = require('dgram');
-const Packet = require('../packet');
+import * as udp from 'dgram';
+import { Packet } from '../packet';
 
 /**
  * [Server description]
@@ -44,4 +44,4 @@ class Server extends udp.Socket {
   }
 }
 
-module.exports = Server;
+export { Server as UDPServer };

@@ -49,7 +49,7 @@ export abstract class AbstractDNSZoneStore extends AbstractDNSRecordStore {
 
         if (zone.getSlaveSettings()) {
             // do it in the background
-            await zone.getSlaveSettings()?.sendNOTIFY();
+            zone.getSlaveSettings()?.sendNOTIFY();
         }
 
         return await this._setZone(zone);

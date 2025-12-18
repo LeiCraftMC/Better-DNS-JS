@@ -1,13 +1,17 @@
-const {
-  TCPServer,
-  UDPServer,
-  DOHServer,
-  createTCPServer,
-  createUDPServer,
-  createDOHServer,
-  createServer,
-} = require('./server');
-const EventEmitter = require('events');
+import { TCPServer } from './server/tcp';
+import { UDPServer } from './server/udp';
+import { DOHServer } from './server/doh';
+import { DNSServer } from './server/dns';
+import { UDPClient } from './client/udp';
+import { TCPClient } from './client/tcp';
+import { DOHClient } from './client/doh';
+import { GoogleClient } from './client/google';
+import { Packet } from './packet';
+import { EventEmitter } from 'events';
+import * as udp from "dgram";
+import * as net from "net";
+import type { BufferWriter } from "./lib/writer";
+import type { BufferReader } from "./lib/reader";
 
 /**
  * [DNS description]
@@ -15,83 +19,399 @@ const EventEmitter = require('events');
  * @docs https://tools.ietf.org/html/rfc1035
  */
 class DNS extends EventEmitter {
-  constructor(options) {
-    super();
-    Object.assign(this, {
-      port             : 53,
-      retries          : 3,
-      timeout          : 3,
-      recursive        : true,
-      resolverProtocol : 'UDP',
-      nameServers      : [
-        '8.8.8.8',
-        '114.114.114.114',
-      ],
-      rootServers: [
-        'a', 'b', 'c', 'd', 'e', 'f',
-        'g', 'h', 'i', 'j', 'k', 'l', 'm',
-      ].map(x => `${x}.root-servers.net`),
-    }, options);
-  }
+	constructor(options: Partial<DNS.DnsClientOptions> = {}) {
+		super();
+		Object.assign(this, {
+			port: 53,
+			retries: 3,
+			timeout: 3,
+			recursive: true,
+			resolverProtocol: 'UDP',
+			nameServers: [
+				'8.8.8.8',
+				'114.114.114.114',
+			],
+			rootServers: [
+				'a', 'b', 'c', 'd', 'e', 'f',
+				'g', 'h', 'i', 'j', 'k', 'l', 'm',
+			].map(x => `${x}.root-servers.net`),
+		}, options);
+	}
 
-  /**
-   * query
-   * @param {*} questions
-   */
-  query(name, type, cls, clientIp) {
-    const { port, nameServers, recursive, resolverProtocol = 'UDP' } = this;
-    const createResolver = DNS[resolverProtocol + 'Client'];
-    return Promise.race(nameServers.map(address => {
-      const resolve = createResolver({ dns: address, port, recursive });
-      return resolve(name, type, cls, clientIp);
-    }));
-  }
+	/**
+	 * query
+	 * @param {*} questions
+	 */
+	query(name: string, type: DNS.PacketQuestion, cls?: DNS.PacketClass, clientIp?: string): Promise<DNS.DnsResponse> {
+		const { port, nameServers, recursive, resolverProtocol = 'UDP' } = this;
+		const createResolver = DNS[resolverProtocol + 'Client'];
 
-  /**
-   * resolve
-   * @param {*} domain
-   * @param {*} type
-   * @param {*} cls
-   */
-  resolve(domain, type = 'ANY', cls = DNS.Packet.CLASS.IN, clientIp = undefined) {
-    return this.query(domain, type, cls, clientIp);
-  }
+		return Promise.race(nameServers.map(address => {
+			const resolve = createResolver({ dns: address, port, recursive });
+			return resolve(name, type, cls, clientIp);
+		}));
+	}
 
-  resolveA(domain, clientIp) {
-    return this.resolve(domain, 'A', undefined, clientIp);
-  }
+	/**
+	 * resolve
+	 * @param {*} domain
+	 * @param {*} type
+	 * @param {*} cls
+	 */
+	resolve(domain: string, type: DNS.PacketQuestion = 'ANY', cls: DNS.PacketClass = DNS.Packet.CLASS.IN, clientIp?: string): Promise<DNS.DnsResponse> {
+		return this.query(domain, type, cls, clientIp);
+	}
 
-  resolveAAAA(domain) {
-    return this.resolve(domain, 'AAAA');
-  }
+	resolveA(domain: string, clientIp?: string): Promise<DNS.DnsResponse> {
+		return this.resolve(domain, 'A', undefined, clientIp);
+	}
 
-  resolveMX(domain) {
-    return this.resolve(domain, 'MX');
-  }
+	resolveAAAA(domain: string): Promise<DNS.DnsResponse> {
+		return this.resolve(domain, 'AAAA');
+	}
 
-  resolveCNAME(domain) {
-    return this.resolve(domain, 'CNAME');
-  }
+	resolveMX(domain: string): Promise<DNS.DnsResponse> {
+		return this.resolve(domain, 'MX');
+	}
 
-  resolvePTR(domain) {
-    return this.resolve(domain, 'PTR');
-  }
+	resolveCNAME(domain: string): Promise<DNS.DnsResponse> {
+		return this.resolve(domain, 'CNAME');
+	}
+
+	resolvePTR(domain: string): Promise<DNS.DnsResponse> {
+		return this.resolve(domain, 'PTR');
+	}
+
+    static createServer(options: {
+        udp?: boolean | DNS.UdpDnsServerOptions;
+        tcp?: boolean;
+        doh?: boolean;
+        handle: DNS.DnsHandler;
+    }) {
+	  	return new DNSServer(options) as DnsServer;
+	}
+	static DNSServer: typeof DnsServer;
+
+    // declare static Packet: typeof Packet;
+
+    static createUDPServer(...options: ConstructorParameters<typeof UdpDnsServer>) {
+		return new UDPServer(...options);
+	}
+    static UDPServer: typeof UdpDnsServer;
+
+    static createTCPServer(...options: ConstructorParameters<typeof TcpDnsServer>) {
+		return new TCPServer(...options);
+	}
+    static TCPServer: typeof TcpDnsServer;
+
+	static createDOHServer(...options: ConstructorParameters<typeof DOHServer>) {
+		return new DOHServer(...options);
+	}
+	static DOHServer: typeof DOHServer;
+
+    static TCPClient: (options: DNS.TCPClientOptions) => DNS.ExtendedDnsResolver;
+    static DOHClient: (options: DNS.DOHClientOptions) => DNS.ExtendedDnsResolver;
+    static UDPClient: (options: DNS.UDPClientOptions) => DNS.ExtendedDnsResolver;
+    static GoogleClient: () => DNS.DnsResolver;
 }
 
-DNS.TCPServer = TCPServer;
-DNS.UDPServer = UDPServer;
-DNS.DOHServer = DOHServer;
+(DNS as any).TCPServer = TCPServer;
+(DNS as any).UDPServer = UDPServer;
+(DNS as any).DOHServer = DOHServer;
+(DNS as any).DNSServer = DNSServer;
 
-DNS.createUDPServer = createUDPServer;
-DNS.createTCPServer = createTCPServer;
-DNS.createDOHServer = createDOHServer;
-DNS.createServer = createServer;
+(DNS as any).TCPClient = TCPClient;
+(DNS as any).DOHClient = DOHClient;
+(DNS as any).UDPClient = UDPClient;
+(DNS as any).GoogleClient = GoogleClient;
 
-DNS.TCPClient = require('./client/tcp');
-DNS.DOHClient = require('./client/doh');
-DNS.UDPClient = require('./client/udp');
-DNS.GoogleClient = require('./client/google');
+(DNS as any).Packet = Packet;
 
-DNS.Packet = require('./packet');
+export default DNS;
 
-module.exports = DNS;
+declare class _Packet {
+
+	readonly header: DNS.Packet.Header;
+	readonly questions: DNS.Packet.IQuestion[];
+	readonly answers: DNS.Packet.IResource[];
+	readonly authorities: DNS.Packet.IResource[];
+	readonly additionals: DNS.Packet.IResource[];
+
+	constructor();
+	constructor(packet: DNS.Packet);
+	constructor(header: DNS.Packet.Header);
+	constructor(questios: DNS.Packet.Question);
+	constructor(answer: DNS.Packet.Resource);
+
+	static createResponseFromRequest(request: DNS.Packet): DNS.Packet;
+
+	toBuffer(): Buffer;
+}
+
+declare namespace _Packet {
+
+	const OPCODE: {
+		readonly QUERY: 0x00;
+		readonly IQUERY: 0x01;
+		readonly STATUS: 0x02;
+		readonly NOTIFY: 0x04;
+		readonly UPDATE: 0x05;
+		readonly DSO: 0x06;
+	}
+
+	const TYPE: {
+		readonly A: 0x01;
+		readonly NS: 0x02;
+		// readonly MD: 0x03;
+		// readonly MF: 0x04;
+		readonly CNAME: 0x05;
+		readonly SOA: 0x06;
+		// readonly MB: 0x07;
+		// readonly MG: 0x08;
+		// readonly MR: 0x09;
+		// readonly NULL: 0x0a;
+		// readonly WKS: 0x0b;
+		readonly PTR: 0x0c;
+		// readonly HINFO: 0x0d;
+		// readonly MINFO: 0x0e;
+		readonly MX: 0x0f;
+		readonly TXT: 0x10;
+		readonly AAAA: 0x1c;
+		readonly SRV: 0x21;
+		readonly EDNS: 0x29;
+		readonly SPF: 0x63;
+		readonly AXFR: 0xfc;
+		readonly IXFR: 0xfb;
+		// readonly MAILB: 0xfd;
+		// readonly MAILA: 0xfe;
+		readonly ANY: 0xff;
+		readonly CAA: 0x101;
+	};
+
+	const CLASS: {
+		readonly IN: 0x01;
+		readonly CS: 0x02;
+		readonly CH: 0x03;
+		readonly HS: 0x04;
+		readonly ANY: 0xff;
+	};
+
+	type Writer = BufferWriter;
+	const Writer: typeof BufferWriter;
+	type Reader = BufferReader;
+	const Reader: typeof BufferReader;
+
+	interface IHeader {
+		id: number;
+		qr: number;
+		opcode: number;
+		aa: number;
+		tc: number;
+		rd: number;
+		ra: number;
+		z: number;
+		rcode: number;
+		qdcount: number;
+		nscount: number;
+		arcount: number;
+	}
+	class Header implements DNS.Packet.IHeader {
+		id: number;
+		qr: number;
+		opcode: number;
+		aa: number;
+		tc: number;
+		rd: number;
+		ra: number;
+		z: number;
+		rcode: number;
+		qdcount: number;
+		nscount: number;
+		arcount: number;
+
+		constructor(header: Partial<DNS.Packet.Header>);
+
+		static parse(buffer: Buffer | DNS.Packet.Reader): DNS.Packet.Header;
+
+		public toBuffer(writer?: DNS.Packet.Writer): Buffer;
+	}
+
+	interface IQuestion {
+		name: string;
+		type: DNS.PacketType;
+		class: DNS.PacketClass;
+	}
+	class Question implements IQuestion {
+		name: string;
+		type: DNS.PacketType;
+		class: DNS.PacketClass;
+
+		constructor(name: string, type: DNS.PacketClass, cls: DNS.PacketType);
+		constructor(question: Question);
+
+		toBuffer(writer?: DNS.Packet.Writer): Buffer;
+
+		static parse(buffer: Buffer | DNS.Packet.Reader): Question;
+		static decode(buffer: Buffer | DNS.Packet.Reader): Question;
+		static encode(question: Question, writer?: DNS.Packet.Writer): Buffer;
+	}
+
+	interface IResource {
+		name: string;
+		ttl: number;
+		type: DNS.PacketType;
+		class: DNS.PacketClass;
+	}
+	class Resource implements IResource {
+		name: string;
+		ttl: number;
+		type: DNS.PacketType;
+		class: DNS.PacketClass;
+
+		constructor(name: string, type: DNS.PacketClass, cls: DNS.PacketType, ttl: number);
+		constructor(resource: Resource);
+
+		toBuffer(writer?: DNS.Packet.Writer): Buffer;
+
+		static parse(buffer: Buffer | DNS.Packet.Reader): Resource;
+		static decode(buffer: Buffer | DNS.Packet.Reader): Resource;
+		static encode(resource: Resource, writer?: DNS.Packet.Writer): Buffer;
+	}
+
+}
+
+declare namespace DNS {
+	interface DnsClientOptions {
+		port: number;
+		retries: number;
+		timeout: number;
+		recursive: boolean;
+		resolverProtocol: "UDP" | "TCP" | "DOH" | "Google";
+		nameServers: string[];
+		rootServers: string[];
+	}
+
+	/**
+	 * @deprecated Use DNS.Packet instead
+	 */
+	interface DnsRequest extends Packet {
+		// header: { id: string };
+		// questions: DnsQuestion[];
+	}
+
+	/**
+	 * @deprecated Use DNS.Packet.Question instead
+	 */
+	interface DnsQuestion {
+		name: string;
+	}
+
+	/**
+	 * @deprecated Use DNS.Packet instead
+	 */
+	interface DnsResponse extends Packet {
+		// answers: DnsAnswer[];
+	}
+
+	interface DnsAnswer {
+		name: string;
+		type: number;
+		class: number;
+		ttl: number;
+		address?: string;
+		domain?: string;
+		data?: string;
+	}
+
+	interface UdpDnsServerOptions {
+		type: "udp4" | "udp6";
+	}
+
+	interface DnsServerListenOptions {
+		udp?: ListenOptions;
+		tcp?: ListenOptions;
+		doh?: ListenOptions;
+	}
+
+	type DnsHandler = (
+		request: DnsRequest,
+		sendResponse: DnsSendResponseFn,
+		remoteInfo: udp.RemoteInfo,
+	) => void;
+
+	type DnsSendResponseFn = (response: DnsResponse, preventClose?: boolean) => void;
+
+	type PacketClass = typeof Packet.CLASS[keyof typeof Packet.CLASS];
+	type PacketType = typeof Packet.TYPE[keyof typeof Packet.TYPE];
+	type PacketQuestion = keyof typeof Packet.TYPE;
+	type ListenOptions = number | {
+		port: number;
+		address: string;
+	};
+
+	interface DnsResolveOptions {
+		recursive?: boolean;
+		/** EDNS ECS, in CIDR format */
+		clientIp?: string;
+	}
+
+	interface DnsResolver {
+		(name: string,
+			type?: DNS.PacketQuestion,
+			cls?: DNS.PacketClass,
+			options?: DNS.DnsResolveOptions,
+		): Promise<DNS.DnsResponse>;
+	}
+
+	interface ExtendedDnsResolver extends DnsResolver {
+		(name: string,
+			type?: DNS.PacketQuestion,
+			cls?: DNS.PacketClass,
+			clientIp?: string
+		): Promise<DNS.DnsResponse>;
+		(packet: DNS.Packet): Promise<DNS.DnsResponse>;
+	}
+
+	interface TCPClientOptions {
+		dns: string;
+		protocol?: "tcp:" | "tls:";
+		port?: 53 | 853 | (number & {});
+	}
+
+	interface DOHClientOptions {
+		dns: string;
+	}
+
+	interface UDPClientOptions {
+		dns: string;
+		port?: 53 | (number & {});
+		socketType?: udp.SocketType;
+	}
+
+	export import Packet = _Packet;
+}
+
+// ******** Server *******
+declare class DnsServer extends EventEmitter {
+	addresses(): {
+		udp?: net.AddressInfo;
+		tcp?: net.AddressInfo;
+		doh?: net.AddressInfo;
+	};
+
+	listen(options: DNS.DnsServerListenOptions): Promise<void>;
+
+	close(): Promise<void>;
+}
+
+declare class UdpDnsServer extends udp.Socket {
+	constructor(arg?: DNS.UdpDnsServerOptions | DNS.DnsHandler);
+	listen(port: number, address?: string): Promise<void>;
+}
+
+declare class TcpDnsServer extends net.Server {
+	constructor(callback?: DNS.DnsHandler);
+}
+
+
+

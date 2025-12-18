@@ -1,4 +1,4 @@
-const https = require('https');
+import * as https from 'https';
 
 const get = url => new Promise(resolve =>
   https.get(url, resolve));
@@ -15,7 +15,7 @@ const readStream = stream => {
   });
 };
 
-const GoogleClient = () =>
+export const GoogleClient = () =>
   (name, type = 'ANY') => {
     return Promise
       .resolve()
@@ -24,4 +24,3 @@ const GoogleClient = () =>
       .then(JSON.parse);
   };
 
-module.exports = GoogleClient;

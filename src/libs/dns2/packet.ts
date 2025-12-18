@@ -1,6 +1,6 @@
-const { debuglog } = require('util');
-const { BufferReader } = require('./lib/reader');
-const { BufferWriter } = require('./lib/writer');
+import { debuglog } from 'util';
+import { BufferReader } from './lib/reader';
+import { BufferWriter } from './lib/writer';
 
 const debug = debuglog('dns2');
 
@@ -903,6 +903,6 @@ Packet.prototype.toBase64URL = function() {
     .replace(/\//g, '_');
 };
 
-module.exports = Packet;
-module.exports.toIPv6 = toIPv6;
-module.exports.fromIPv6 = fromIPv6;
+export { Packet };
+// export { toIPv6 };
+// export { fromIPv6 };

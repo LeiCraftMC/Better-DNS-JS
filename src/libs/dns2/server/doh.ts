@@ -1,9 +1,9 @@
-const http = require('http');
-const https = require('https');
-const { URL } = require('url');
-const Packet = require('../packet');
-const EventEmitter = require('events');
-const { debuglog } = require('util');
+import * as http from 'http';
+import * as https from 'https';
+import { URL } from 'url';
+import { Packet } from '../packet';
+import { EventEmitter } from 'events';
+import { debuglog } from 'util';
 
 const debug = debuglog('dns2-server');
 
@@ -147,4 +147,4 @@ class Server extends EventEmitter {
   }
 }
 
-module.exports = Server;
+export { Server as DOHServer };

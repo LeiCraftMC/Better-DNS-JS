@@ -1,5 +1,6 @@
 import { SocketAddress } from "net";
 import DNS from "../../libs/dns2";
+import { BoundedExecutor } from "@cleverjs/utils";
 
 export class SlaveSettings {
 
@@ -40,25 +41,27 @@ export class SlaveSettings {
                 continue;
             }
 
-            const query = DNS.UDPClient({
-                dns: socketAddress.address,
-                port: socketAddress.port,
-                socketType: socketAddress.family === "ipv6" ? "udp6" : "udp4"
-            });
+            await new BoundedExecutor(async () => {
+                const query = DNS.UDPClient({
+                    dns: socketAddress.address,
+                    port: socketAddress.port,
+                    socketType: socketAddress.family === "ipv6" ? "udp6" : "udp4"
+                });
 
-            const packet = new DNS.Packet();
-            packet.header.opcode = DNS.Packet.OPCODE.NOTIFY;
-            packet.header.aa = 1;
-            packet.questions.push({
-                name: this.zoneName,
-                type: DNS.Packet.TYPE.SOA,
-                class: DNS.Packet.CLASS.IN
-            });
+                const packet = new DNS.Packet();
+                packet.header.opcode = DNS.Packet.OPCODE.NOTIFY;
+                packet.header.aa = 1;
+                packet.questions.push({
+                    name: this.zoneName,
+                    type: DNS.Packet.TYPE.SOA,
+                    class: DNS.Packet.CLASS.IN
+                });
 
-            const response = await query(packet);
-            if (response.header.rcode !== 0) {
-                // console.error(`Failed to send NOTIFY to ${server.address}:${server.port} - RCODE: ${response.header.rcode}`);
-            }
+                const response = await query(packet);
+                if (response.header.rcode !== 0) {
+                    // console.error(`Failed to send NOTIFY to ${server.address}:${server.port} - RCODE: ${response.header.rcode}`);
+                }
+            }, 5_000);
         }
     }
 

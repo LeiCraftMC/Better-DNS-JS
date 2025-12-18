@@ -1,16 +1,16 @@
-const udp = require("dgram");
-const Packet = require("../packet");
-const { equal } = require("assert");
-const { debuglog } = require("util");
+import * as udp from 'dgram';
+import { Packet } from '../packet';
+import { debuglog } from "util";
+import { equal } from "assert";
 
 const debug = debuglog("dns2");
 
-module.exports = ({ dns = "8.8.8.8", port = 53, socketType = "udp4" } = {}) => {
+export const UDPClient = ({ dns = "8.8.8.8", port = 53, socketType = "udp4" } = {}) => {
     return (
-        nameOrPacket,
+        nameOrPacket: string | any,
         type = "A",
         cls = Packet.CLASS.IN,
-        { clientIp, recursive = true } = {}
+        { clientIp = undefined, recursive = true } = {}
     ) => {
 		let query;
 		if (nameOrPacket instanceof Packet) {

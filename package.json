@@ -34,5 +34,8 @@
         "build:cjs": "rm -rf dist/cjs && tsc -p tsconfig.cjs.json",
         "build:types": "rm -rf dist/types && tsc -p tsconfig.types.json",
         "release": "bun run build && bun run test && bun publish"
+    },
+    "dependencies": {
+        "@cleverjs/utils": "^1.1.9"
     }
 }
