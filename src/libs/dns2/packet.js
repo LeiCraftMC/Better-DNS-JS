@@ -861,6 +861,10 @@ Packet.Resource.CAA = {
 Packet.Reader = BufferReader;
 Packet.Writer = BufferWriter;
 
+/**
+ * @param {Packet} request [description]
+ * @return {Packet} [description]
+ */
 Packet.createResponseFromRequest = function(request) {
   const response = new Packet(request);
   response.header.qr = 1;
@@ -868,12 +872,21 @@ Packet.createResponseFromRequest = function(request) {
   return response;
 };
 
+/**
+ * @param {Object} base [description]
+ * @param {Object} record [description]
+ * @return {Packet.Resource} [description]
+ */
 Packet.createResourceFromQuestion = function(base, record) {
   const resource = new Packet.Resource(base);
   Object.assign(resource, record);
   return resource;
 };
 
+/**
+ * @param {any} socket [description]
+ * @return {Promise<Buffer>} [description]
+ */
 Packet.readStream = socket => {
   let chunks = [];
   let chunklen = 0;
@@ -911,6 +924,7 @@ Packet.readStream = socket => {
 /**
  * DoH
  * @docs https://tools.ietf.org/html/rfc8484
+ * @return {string}
  */
 Packet.prototype.toBase64URL = function() {
   const buffer = this.toBuffer();
