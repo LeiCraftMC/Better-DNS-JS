@@ -1,4 +1,4 @@
-import DNS, { createServer as createDNSServer, Packet } from 'dns2';
+import DNS, { createServer as createDNSServer, Packet } from '../libs/dns2';
 import { DNSRecords } from '../utils/records';
 import { AbstractDNSRecordStore } from './store/abstractRecordStore';
 

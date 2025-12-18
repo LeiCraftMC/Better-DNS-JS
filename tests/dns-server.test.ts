@@ -1,6 +1,6 @@
 import { BasicInMemoryDNSZoneStore, DNSRecords, DNSServer, DNSZone } from "better-dns";
 import { describe, expect, test } from "bun:test";
-import DNS from "dns2";
+import DNS from "../src/libs/dns2";
 
 
 describe("dns_server", () => {
