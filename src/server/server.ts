@@ -133,6 +133,13 @@ export namespace DNSServer {
 
         private static async handleAXFRRequest(question: DNS.Packet.IQuestion, response: DNS.Packet, dnsRecordStore: AbstractDNSRecordStore, send: DNS.DnsSendResponseFn) {
 
+            const slaveConfig = await dnsRecordStore.getSlaveSettings(RequestHandler.normalizeName(question.name));
+            if (!slaveConfig) {
+                response.header.rcode = 0x05; // REFUSED
+                send(response, false);
+                return;
+            }
+
             const zoneRecords = await dnsRecordStore.getAllRecordsForZone(RequestHandler.normalizeName(question.name));
             const soaRecords = zoneRecords.filter(record => record.type === DNSRecords.TYPE.SOA);
 
