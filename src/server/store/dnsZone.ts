@@ -78,8 +78,8 @@ export class DNSZone {
         return false;
     }
 
-    public createSlaveSettings() {
-        this.slaveSettings = new SlaveSettings(this.name);
+    public createSlaveSettings(slaveServers?: SlaveSettings.SlaveServerData[]): SlaveSettings {
+        this.slaveSettings = new SlaveSettings(this.name, slaveServers);
         return this.slaveSettings;
     }
 
