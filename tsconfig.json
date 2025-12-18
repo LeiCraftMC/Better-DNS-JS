@@ -11,7 +11,10 @@
     "verbatimModuleSyntax": true,
     "paths": {
       "better-dns": ["./src/index.ts"]
-    }
+    },
+		
+    // remove later if dn2 is mapped to ts
+		"allowJs": true
   },
 	"include": [
     "src/**/*",

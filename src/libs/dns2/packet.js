@@ -41,6 +41,7 @@ const fromIPv6 = (address) => {
  *
  *  03 77 77 77 01 7a 02 63 6e 00 00 01 00 01>
  *   <-W--W--W-----Z-----C--N>|<----------->|
+ * @returns {Packet}
  */
 function Packet(data) {
   this.header = {};
@@ -143,8 +144,8 @@ Packet.uuid = function() {
 
 /**
  * [parse description]
- * @param  {[type]} buffer [description]
- * @return {[type]}        [description]
+ * @param  {Buffer} buffer [description]
+ * @return {Packet}        [description]
  */
 Packet.parse = function(buffer) {
   const packet = new Packet();
@@ -188,7 +189,8 @@ Object.defineProperty(Packet.prototype, 'recursive', {
 
 /**
  * [toBuffer description]
- * @return {[type]} [description]
+ * @param {Packet.Writer} writer [description]
+ * @return {Buffer} [description]
  */
 Packet.prototype.toBuffer = function(writer) {
   writer = writer || new Packet.Writer();
@@ -215,8 +217,9 @@ Packet.prototype.toBuffer = function(writer) {
 
 /**
  * [Header description]
- * @param {[type]} options [description]
+ * @param {Object} header [description]
  * @docs https://tools.ietf.org/html/rfc1035#section-4.1.1
+ * @returns {Packet.Header}
  */
 Packet.Header = function(header) {
   this.id = 0;
@@ -238,8 +241,8 @@ Packet.Header = function(header) {
 };
 /**
  * [parse description]
- * @param  {[type]} buffer [description]
- * @return {[type]}        [description]
+ * @param  {Buffer|Packet.Reader} reader [description]
+ * @return {Packet.Header}        [description]
  * @docs https://tools.ietf.org/html/rfc1035#section-4.1.1
  */
 Packet.Header.parse = function(reader) {
@@ -265,7 +268,8 @@ Packet.Header.parse = function(reader) {
 
 /**
  * [toBuffer description]
- * @return {[type]} [description]
+ * @param  {Packet.Writer} writer [description]
+ * @return {Buffer} [description]
  */
 Packet.Header.prototype.toBuffer = function(writer) {
   writer = writer || new Packet.Writer();
@@ -287,7 +291,11 @@ Packet.Header.prototype.toBuffer = function(writer) {
 
 /**
  * Question section format
+ * @param {string|Object} name [description]
+ * @param {number} type [description]
+ * @param {number} cls [description]
  * @docs https://tools.ietf.org/html/rfc1035#section-4.1.2
+ * @returns {Packet.Question}
  */
 Packet.Question = function(name, type, cls) {
   const defaults = {
@@ -308,8 +316,8 @@ Packet.Question = function(name, type, cls) {
 
 /**
  * [toBuffer description]
- * @param  {[type]} writer [description]
- * @return {[type]}        [description]
+ * @param  {Packet.Writer} writer [description]
+ * @return {Buffer}        [description]
  */
 Packet.Question.prototype.toBuffer = function(writer) {
   return Packet.Question.encode(this, writer);
@@ -317,8 +325,8 @@ Packet.Question.prototype.toBuffer = function(writer) {
 
 /**
  * [parse description]
- * @param  {[type]} reader [description]
- * @return {[type]}        [description]
+ * @param  {Buffer|Packet.Reader} reader [description]
+ * @return {Packet.Question}        [description]
  */
 Packet.Question.parse =
 Packet.Question.decode = function(reader) {
@@ -332,6 +340,11 @@ Packet.Question.decode = function(reader) {
   return question;
 };
 
+/**
+ * @param {Packet.Question} question [description]
+ * @param {Packet.Writer} writer [description]
+ * @return {Buffer} [description]
+ */
 Packet.Question.encode = function(question, writer) {
   writer = writer || new Packet.Writer();
   Packet.Name.encode(question.name, writer);
@@ -342,7 +355,12 @@ Packet.Question.encode = function(question, writer) {
 
 /**
  * Resource record format
+ * @param {string|Object} name [description]
+ * @param {number} type [description]
+ * @param {number} cls [description]
+ * @param {number} ttl [description]
  * @docs https://tools.ietf.org/html/rfc1035#section-4.1.3
+ * @returns {Packet.Resource}
  */
 Packet.Resource = function(name, type, cls, ttl) {
   const defaults = {
@@ -365,8 +383,8 @@ Packet.Resource = function(name, type, cls, ttl) {
 
 /**
  * [toBuffer description]
- * @param  {[type]} writer [description]
- * @return {[type]}        [description]
+ * @param  {Packet.Writer} writer [description]
+ * @return {Buffer}        [description]
  */
 Packet.Resource.prototype.toBuffer = function(writer) {
   return Packet.Resource.encode(this, writer);
@@ -374,9 +392,9 @@ Packet.Resource.prototype.toBuffer = function(writer) {
 
 /**
  * [encode description]
- * @param  {[type]} resource [description]
- * @param  {[type]} writer   [description]
- * @return {[type]}          [description]
+ * @param  {Packet.Resource} resource [description]
+ * @param  {Packet.Writer} writer   [description]
+ * @return {Buffer}          [description]
  */
 Packet.Resource.encode = function(resource, writer) {
   writer = writer || new Packet.Writer();
@@ -395,8 +413,8 @@ Packet.Resource.encode = function(resource, writer) {
 };
 /**
  * [parse description]
- * @param  {[type]} reader [description]
- * @return {[type]}        [description]
+ * @param  {Buffer|Packet.Reader} reader [description]
+ * @return {Packet.Resource}        [description]
  */
 Packet.Resource.parse =
 Packet.Resource.decode = function(reader) {

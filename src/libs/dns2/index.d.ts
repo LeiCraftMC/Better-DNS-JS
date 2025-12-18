@@ -155,6 +155,104 @@ export declare namespace Packet {
         static encode(resource: Resource, writer?: Packet.Writer): Buffer;
     }
 
+    namespace Resource {
+        class A {
+            type: 0x01;
+            class: 0x01;
+            address: string;
+            constructor(address?: string);
+            static encode(record: any, writer?: Writer): Buffer;
+            static decode(this: any, reader: Reader, length: number): any;
+        }
+
+        interface IMXRecord {
+            exchange: string;
+            priority: number;
+        }
+
+        class MX implements IMXRecord {
+            type: 0x0f;
+            class: 0x01;
+            exchange: string;
+            priority: number;
+            constructor(exchange?: string, priority?: number);
+            static encode(record: any, writer?: Writer): Buffer;
+            static decode(this: any, reader: Reader, length: number): any;
+        }
+
+        const AAAA: {
+            decode(this: any, reader: Reader, length: number): any;
+            encode(record: any, writer?: Writer): Buffer;
+        };
+
+        const NS: {
+            decode(this: any, reader: Reader, length: number): any;
+            encode(record: any, writer?: Writer): Buffer;
+        };
+
+        const PTR: {
+            decode(this: any, reader: Reader, length: number): any;
+            encode(record: any, writer?: Writer): Buffer;
+        };
+
+        const CNAME: {
+            decode(this: any, reader: Reader, length: number): any;
+            encode(record: any, writer?: Writer): Buffer;
+        };
+
+        const TXT: {
+            decode(this: any, reader: Reader, length: number): any;
+            encode(record: any, writer?: Writer): Buffer;
+        };
+
+        const SPF: {
+            decode(this: any, reader: Reader, length: number): any;
+            encode(record: any, writer?: Writer): Buffer;
+        };
+
+        const SOA: {
+            decode(this: any, reader: Reader, length: number): any;
+            encode(record: any, writer?: Writer): Buffer;
+        };
+
+        const SRV: {
+            decode(this: any, reader: Reader, length: number): any;
+            encode(record: any, writer?: Writer): Buffer;
+        };
+
+        const CAA: {
+            encode(record: any, writer?: Writer): Buffer;
+        };
+
+        function EDNS(rdata?: any): any;
+        namespace EDNS {
+            function decode(this: any, reader: Reader, length: number): any;
+            function encode(record: any, writer?: Writer): Buffer;
+            function ECS(clientIp: string): any;
+            namespace ECS {
+                function decode(reader: Reader, length: number): any;
+                function encode(record: any, writer: Writer): void;
+            }
+        }
+    }
+
+    const Name: {
+        COPY: number;
+        decode(reader: Reader): string;
+        encode(domain: string, writer?: Writer): Buffer;
+    };
+
+    function parse(buffer: Buffer): Packet;
+    function uuid(): number;
+    function createResponseFromRequest(request: Packet): Packet;
+    function createResourceFromQuestion(base: any, record: any): Resource;
+    function readStream(socket: any): Promise<Buffer>;
+    function toBase64URL(this: Packet): string;
+
+    const EDNS_OPTION_CODE: {
+        ECS: 0x08;
+    };
+
 }
 
 declare namespace DNS {
