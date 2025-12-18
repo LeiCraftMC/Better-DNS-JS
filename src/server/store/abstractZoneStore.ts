@@ -47,6 +47,11 @@ export abstract class AbstractDNSZoneStore extends AbstractDNSRecordStore {
 
         zone.records.get(zone.name)?.set(DNSRecords.TYPE.SOA, [soaRecord]);
 
+        if (zone.getSlaveSettings()) {
+            // do it in the background
+            zone.getSlaveSettings()?.sendNOTIFY();
+        }
+
         return await this._setZone(zone);
     }
 
@@ -141,7 +146,7 @@ export abstract class AbstractDNSZoneStore extends AbstractDNSRecordStore {
         if (!zone) {
             return null;
         }
-        return zone.slaveSettings || null;
+        return zone.getSlaveSettings();
     }
 
 }

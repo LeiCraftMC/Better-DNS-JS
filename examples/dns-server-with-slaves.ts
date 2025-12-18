@@ -1,0 +1,58 @@
+import { BasicInMemoryDNSZoneStore, DNSRecords, DNSServer } from "better-dns";
+
+const port = process.env.DNS_PORT ? parseInt(process.env.DNS_PORT) : 53;
+const slaveAddress = process.env.SLAVE_DNS_ADDRESS || "127.0.0.1";
+const slavePort = process.env.SLAVE_DNS_PORT ? parseInt(process.env.SLAVE_DNS_PORT) : 5353;
+
+const server = new DNSServer({
+    port: port,
+    host: "::",
+    protocol: "both",
+    dnsRecordStore: new BasicInMemoryDNSZoneStore({
+        nsDomain: "ns.example.com",
+        nsAdminEmail: "admin.ns.example.com"
+    })
+});
+
+
+const zone = await server.recordStore.createZone("domain.tld");
+
+await zone.createSlaveSettings().addSlaveServer(slaveAddress, slavePort);
+
+zone.setRecord("domain.tld", DNSRecords.TYPE.A, {
+    address: "192.0.2.1"
+});
+zone.setRecord("domain.tld", DNSRecords.TYPE.AAAA, {
+    address: "2001:db8::1"
+});
+zone.setRecord("www.domain.tld", DNSRecords.TYPE.CNAME, {
+    domain: "domain.tld"
+});
+zone.setRecord("domain.tld", DNSRecords.TYPE.MX, {
+    exchange: "mail.domain.tld",
+    priority: 10
+});
+zone.setRecord("domain.tld", DNSRecords.TYPE.TXT, {
+    data: "v=spf1 include:example.com -all"
+});
+zone.setRecord("domain.tld", DNSRecords.TYPE.SPF, {
+    data: "v=spf1 include:example.com -all"
+});
+zone.setRecord("domain.tld", DNSRecords.TYPE.CAA, {
+    flags: 0,
+    tag: "issuewild",
+    value: "letsencrypt.org"
+});
+zone.setRecord("_srv._tcp.domain.tld", DNSRecords.TYPE.SRV, {
+    priority: 10,
+    weight: 5,
+    port: 8080,
+    target: "srv.domain.tld"
+});
+
+await server.recordStore.updateZone(zone);
+
+
+await server.start();
+console.log(`DNS server started on [::]:${port}`);
+
