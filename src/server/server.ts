@@ -13,7 +13,7 @@ export class DNSServer<R extends AbstractDNSRecordStore = AbstractDNSRecordStore
         protected readonly options: Readonly<DNSServer.Options<R>>
     ) {
         this.recordStore = options.dnsRecordStore;
-        
+
         this.requestHandler = options.requestHandler ?? new DNSServer.RequestHandler(options);
 
         this.dnsServer = createDNSServer({
@@ -62,10 +62,59 @@ export namespace DNSServer {
 
     export class RequestHandler<R extends AbstractDNSRecordStore = AbstractDNSRecordStore> {
 
-        constructor(protected readonly options: RequestHandlerOptions<R>) {}
+        constructor(protected readonly options: RequestHandlerOptions<R>) { }
 
         private static normalizeName(unparsedName: string): string {
             return (unparsedName.endsWith('.') ? unparsedName.slice(0, -1) : unparsedName).toLowerCase();
+        }
+
+        private static async addAnswers(question: DNS.Packet.IQuestion, response: DNS.Packet, dnsRecordStore: AbstractDNSRecordStore, answers: DNSRecords.RecordData[]) {
+
+            if (answers.length === 0) {
+                // NXDOMAIN
+                response.header.rcode = 0x03;
+
+                const soaRecord = (await dnsRecordStore.getAuthority(question.name))[0];
+                if (soaRecord) {
+                    response.authorities.push({
+                        class: question.class,
+                        ...soaRecord
+                    });
+                    // Mark this as an authoritative answer
+                    response.header.aa = 1;
+                }
+            } else {
+                // Mark this as an authoritative answer
+                response.header.aa = 1;
+            }
+
+            answers.forEach(recordData => {
+                response.answers.push({
+                    name: question.name,
+                    type: question.type,
+                    class: question.class,
+                    ...recordData
+                });
+            });
+        }
+
+        private static addAuthoritiesAndAdditionals(question: DNS.Packet.IQuestion, response: DNS.Packet, authorities?: DNSRecords.ResponseWithoutClass[], additionals?: DNSRecords.ResponseWithoutClass[]) {
+            if (authorities) {
+                authorities.forEach(data => {
+                    response.authorities.push({
+                        class: question.class,
+                        ...data
+                    });
+                });
+            }
+            if (additionals) {
+                additionals.forEach(data => {
+                    response.additionals.push({
+                        class: question.class,
+                        ...data
+                    });
+                });
+            }
         }
 
         public getHandleFn(): DNS.DnsHandler {
@@ -81,7 +130,7 @@ export namespace DNSServer {
                 // AD should only be set for DNSSEC, so ensure it's off 
                 // response.header.ad = 0;
 
-                
+
                 // Handle EDNS (copy from request)
                 // request.additionals.forEach(add => {
                 //     if (add.type === Packet.TYPE.EDNS) { // @ts-ignore
@@ -101,48 +150,22 @@ export namespace DNSServer {
 
                     if (cls === DNSRecords.CLASS.IN) {
 
-                        const { answers, authorities, additionals } = await opts.dnsRecordStore.getRecords(name, type as any);
+                        let answers: DNSRecords.RecordData[];
+                        let authorities: DNSRecords.ResponseWithoutClass[] | undefined;
+                        let additionals: DNSRecords.ResponseWithoutClass[] | undefined;
 
-                        answers.forEach(recordData => {
-                            response.answers.push({
-                                name,
-                                type,
-                                class: cls,
-                                ...recordData
-                            });
-                        });
-
-                        if (answers.length === 0) {
-                            // NXDOMAIN
-                            response.header.rcode = 0x03;
-
-                            const soaRecord = (await opts.dnsRecordStore.getAuthority(name))[0];
-                            if (soaRecord) {
-                                response.authorities.push({
-                                    class: cls,
-                                    ...soaRecord
-                                });
-                                // Mark this as an authoritative answer
-                                response.header.aa = 1;
-                            }
+                        const records = await opts.dnsRecordStore.getRecords(name, type as any);
+                        if (Array.isArray(records)) {
+                            answers = records;
                         } else {
-                            // Mark this as an authoritative answer
-                            response.header.aa = 1;
+                            answers = records.answers;
+                            authorities = records.authorities;
+                            additionals = records.additionals;
                         }
 
-                        authorities.forEach(data => { 
-                            response.authorities.push({
-                                class: cls,
-                                ...data
-                            });
-                        });
+                        await RequestHandler.addAnswers(question, response, opts.dnsRecordStore, answers);
 
-                        additionals.forEach(data => {
-                            response.additionals.push({
-                                class: cls,
-                                ...data
-                            });
-                        });
+                        RequestHandler.addAuthoritiesAndAdditionals(question, response, authorities, additionals);
                     }
                 } catch (err) {
                     if (opts.logErrors) {
