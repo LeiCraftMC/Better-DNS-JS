@@ -39,14 +39,14 @@ export class DNSServer<R extends AbstractDNSRecordStore = AbstractDNSRecordStore
 
                 try {
                     const [ question ] = request.questions;
-                    const { name: unparsedName, type, class: cls } = question as { name: string; type: DNSRecords.TYPES, class: DNSRecords.CLASSES };
+                    const { name: unparsedName, type, class: cls } = question as Packet.Question;
 
                     const name = (unparsedName.endsWith('.') ? unparsedName.slice(0, -1) : unparsedName).toLowerCase();
 
 
                     if (cls === DNSRecords.CLASS.IN) {
 
-                        const { answers, authorities, additionals } = await options.dnsRecordStore.getRecords(name, type);
+                        const { answers, authorities, additionals } = await options.dnsRecordStore.getRecords(name, type as any);
 
                         answers.forEach(recordData => {
                             response.answers.push({

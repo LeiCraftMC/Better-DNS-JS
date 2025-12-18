@@ -1,6 +1,6 @@
 const { debuglog } = require('util');
-const BufferReader = require('./lib/reader');
-const BufferWriter = require('./lib/writer');
+const { BufferReader } = require('./lib/reader');
+const { BufferWriter } = require('./lib/writer');
 
 const debug = debuglog('dns2');
 

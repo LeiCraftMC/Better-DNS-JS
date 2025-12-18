@@ -3,47 +3,114 @@
 import * as udp from "dgram";
 import { EventEmitter } from "events";
 import * as net from "net";
+import type { BufferWriter } from "./lib/writer";
+import type { BufferReader } from "./lib/reader";
 
-declare class Packet {
-    static TYPE: {
-        A: 0x01;
-        NS: 0x02;
-        MD: 0x03;
-        MF: 0x04;
-        CNAME: 0x05;
-        SOA: 0x06;
-        MB: 0x07;
-        MG: 0x08;
-        MR: 0x09;
-        NULL: 0x0a;
-        WKS: 0x0b;
-        PTR: 0x0c;
-        HINFO: 0x0d;
-        MINFO: 0x0e;
-        MX: 0x0f;
-        TXT: 0x10;
-        AAAA: 0x1c;
-        SRV: 0x21;
-        EDNS: 0x29;
-        SPF: 0x63;
-        AXFR: 0xfc;
-        MAILB: 0xfd;
-        MAILA: 0xfe;
-        ANY: 0xff;
-        CAA: 0x101;
-    };
+export declare class Packet {
 
-    static CLASS: {
-        IN: 0x01;
-        CS: 0x02;
-        CH: 0x03;
-        HS: 0x04;
-        ANY: 0xff;
-    };
 
     static createResponseFromRequest(request: DNS.DnsRequest): DNS.DnsResponse;
-
+    
     toBuffer(): Buffer;
+}
+
+export declare namespace Packet {
+
+    const TYPE: {
+        readonly A: 0x01;
+        readonly NS: 0x02;
+        readonly MD: 0x03;
+        readonly MF: 0x04;
+        readonly CNAME: 0x05;
+        readonly SOA: 0x06;
+        readonly MB: 0x07;
+        readonly MG: 0x08;
+        readonly MR: 0x09;
+        readonly NULL: 0x0a;
+        readonly WKS: 0x0b;
+        readonly PTR: 0x0c;
+        readonly HINFO: 0x0d;
+        readonly MINFO: 0x0e;
+        readonly MX: 0x0f;
+        readonly TXT: 0x10;
+        readonly AAAA: 0x1c;
+        readonly SRV: 0x21;
+        readonly EDNS: 0x29;
+        readonly SPF: 0x63;
+        readonly AXFR: 0xfc;
+        readonly MAILB: 0xfd;
+        readonly MAILA: 0xfe;
+        readonly ANY: 0xff;
+        readonly CAA: 0x101;
+    };
+
+    const CLASS: {
+        readonly IN: 0x01;
+        readonly CS: 0x02;
+        readonly CH: 0x03;
+        readonly HS: 0x04;
+        readonly ANY: 0xff;
+    };
+
+    declare class Header {
+        id: number;
+        qr: number;
+        opcode: number;
+        aa: number;
+        tc: number;
+        rd: number;
+        ra: number;
+        z: number;
+        rcode: number;
+        qdcount: number;
+        nscount: number;
+        arcount: number;
+
+        constructor(header: Partial<Packet.Header>);
+
+        static parse(buffer: Buffer | Packet.Reader): Packet.Header;
+
+        public toBuffer(writer?: Packet.Writer): Buffer;
+    }
+
+    declare class Question {
+        name: string
+        type: DNS.PacketClass;
+        class: DNS.PacketType;
+
+        constructor(name: string, type: DNS.PacketClass, cls: DNS.PacketType);
+        constructor(obj: Question);
+
+        toBuffer(writer?: Packet.Writer): Buffer;
+
+        static parse(buffer: Buffer | Packet.Reader): Question;
+        static decode(buffer: Buffer | Packet.Reader): Question;
+        static encode(question: Question, writer?: Packet.Writer): Buffer;
+    }
+
+    declare class Resource {
+        name: string
+        ttl: number;
+        type: DNS.PacketClass;
+        class: DNS.PacketType;
+
+        constructor(name: string, type: DNS.PacketClass, cls: DNS.PacketType, ttl: number);
+        constructor(obj: Resource);
+
+        toBuffer(writer?: Packet.Writer): Buffer;
+
+        static parse(buffer: Buffer | Packet.Reader): Resource;
+        static decode(buffer: Buffer | Packet.Reader): Resource;
+        static encode(resource: Resource, writer?: Packet.Writer): Buffer;
+    }
+
+
+
+    declare type Writer = BufferWriter;
+    declare const Writer: typeof BufferWriter;
+    declare type Reader = BufferReader;
+    declare const Reader: typeof BufferReader;
+
 }
 
 declare namespace DNS {
@@ -57,16 +124,19 @@ declare namespace DNS {
         rootServers: string[];
     }
 
-    interface DnsRequest {
+    interface DnsRequest extends Packet {
         header: { id: string };
         questions: DnsQuestion[];
     }
 
+    /**
+     * @deprecated Use DNS.Packet.Question instead
+     */
     interface DnsQuestion {
         name: string;
     }
 
-    interface DnsResponse {
+    interface DnsResponse extends Packet {
         answers: DnsAnswer[];
     }
 
@@ -97,6 +167,7 @@ declare namespace DNS {
     ) => void;
 
     type PacketClass = typeof Packet.CLASS[keyof typeof Packet.CLASS];
+    type PacketType = typeof Packet.TYPE[keyof typeof Packet.TYPE];
     type PacketQuestion = keyof typeof Packet.TYPE;
     type ListenOptions = number | {
         port: number;
@@ -165,7 +236,7 @@ declare class DNS {
         handle: DNS.DnsHandler;
     }): DnsServer;
 
-    static Packet: typeof Packet;
+    // static Packet: typeof Packet;
 
     static createUDPServer: (...options: ConstructorParameters<typeof UdpDnsServer>) => UdpDnsServer;
     static UDPServer: typeof UdpDnsServer;
@@ -189,6 +260,12 @@ declare class DNS {
     resolveAAAA(domain: string): Promise<DNS.DnsResponse>;
     resolveMX(domain: string): Promise<DNS.DnsResponse>;
     resolveCNAME(domain: string): Promise<DNS.DnsResponse>;
+}
+
+namespace DNS {
+
+    export import Packet = Packet;
+
 }
 
 export = DNS;
