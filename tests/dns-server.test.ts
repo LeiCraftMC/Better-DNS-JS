@@ -1,6 +1,7 @@
 import { BasicInMemoryDNSZoneStore, DNSRecords, DNSServer, DNSZone } from "better-dns";
 import { describe, expect, test } from "bun:test";
 import DNS from "../src/libs/dns2";
+import { SlaveSettings } from "../src/server/store/slaveSettings";
 
 
 describe("dns_server", () => {
@@ -158,6 +159,18 @@ describe("dns_server", () => {
             "domain.tld",
             "tld"
         ]);
+
+        const slaveSettings = new SlaveSettings("domain.tld");
+        slaveSettings.addAllowedTransferIP("1.1.1.0/24");
+        slaveSettings.addAllowedTransferIP("2001:db8::/32");
+
+        expect(slaveSettings.isSlaveAllowed("1.1.1.5")).toBe(true);
+        expect(slaveSettings.isSlaveAllowed("2001:db8::1")).toBe(true);
+        expect(slaveSettings.isSlaveAllowed("2.2.2.2")).toBe(false);
+        expect(slaveSettings.isSlaveAllowed("2001:db9::1")).toBe(false);
+        expect(slaveSettings.isSlaveAllowed("invalid_ip")).toBe(false);
+        expect(slaveSettings.isSlaveAllowed("1234")).toBe(false);
+        expect(slaveSettings.isSlaveAllowed("1.1.1.256")).toBe(false);
 
         expect(DNSZone.Util.nextSoaSerial()).toBeGreaterThan(0);
     });
