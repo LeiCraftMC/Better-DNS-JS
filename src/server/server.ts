@@ -133,18 +133,15 @@ export namespace DNSServer {
         }
 
         private static async handleAXFRRequest(rinfo: RemoteInfo, question: DNS.Packet.IQuestion, response: DNS.Packet, dnsRecordStore: AbstractDNSRecordStore, send: DNS.DnsSendResponseFn) {
-            console.log(`Received AXFR request for zone ${question.name} from ${rinfo.address().address}:${rinfo.address().port}`);
+
             const slaveConfig = await dnsRecordStore.getSlaveSettings(RequestHandler.normalizeName(question.name));
-            console.log(slaveConfig);
             if (!slaveConfig) {
-                console.log(`AXFR request for zone ${question.name} from ${rinfo.address().address}:${rinfo.address().port} refused due to no slave config`);
                 response.header.rcode = 0x05; // REFUSED
                 send(response, false);
                 return;
             }
             //@ts-ignore
             if (!slaveConfig.isSlaveAllowed(rinfo.address().address)) {
-                console.log(`AXFR request for zone ${question.name} from ${rinfo.address().address}:${rinfo.address().port} refused due to IP not allowed`);
                 response.header.rcode = 0x05; // REFUSED
                 send(response, false);
                 return;
