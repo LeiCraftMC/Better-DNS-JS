@@ -140,8 +140,8 @@ export namespace DNSServer {
                 send(response, false);
                 return;
             }
-
-            if (!slaveConfig.isSlaveAllowed(rinfo.address)) {
+            //@ts-ignore
+            if (!slaveConfig.isSlaveAllowed(rinfo.address().address)) {
                 response.header.rcode = 0x05; // REFUSED
                 send(response, false);
                 return;
