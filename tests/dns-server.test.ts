@@ -171,6 +171,15 @@ describe("dns_server", () => {
         expect(slaveSettings.isSlaveAllowed("invalid_ip")).toBe(false);
         expect(slaveSettings.isSlaveAllowed("1234")).toBe(false);
         expect(slaveSettings.isSlaveAllowed("1.1.1.256")).toBe(false);
+        
+        const slaveSettings2 = new SlaveSettings("domain.tld");
+        slaveSettings2.addAllowedTransferIP("0.0.0.0/0");
+        slaveSettings2.addAllowedTransferIP("::/0");
+
+        expect(slaveSettings2.isSlaveAllowed("1.0.0.1")).toBe(true);
+        expect(slaveSettings2.isSlaveAllowed("255.255.255.255")).toBe(true);
+        expect(slaveSettings2.isSlaveAllowed("2001:db8::1")).toBe(true);
+        expect(slaveSettings2.isSlaveAllowed("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff")).toBe(true);
 
         expect(DNSZone.Util.nextSoaSerial()).toBeGreaterThan(0);
     });
